@@ -382,6 +382,10 @@ select option{background:var(--surface2);}
       <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       Settings
     </button>
+    <button class="nav-item" onclick="goTo('trash')" id="nav-trash">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Recycle Bin <span id="trash-badge" style="display:none;background:var(--red);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;margin-left:4px;font-family:var(--font-mono);"></span>
+    </button>
   </nav>
   <div class="sidebar-bottom">
     <div class="company-pill" onclick="goTo('settings')">
@@ -414,9 +418,9 @@ select option{background:var(--surface2);}
   <!-- DASHBOARD -->
   <div id="pg-dashboard" class="page active">
     <div class="stats-row">
-      <div class="stat c"><div class="stat-glow"></div><div class="stat-tag">// total invoiced</div><div class="stat-val" id="s-total">₹0</div><div class="stat-sub" id="s-total-c">0 invoices</div></div>
-      <div class="stat g"><div class="stat-glow"></div><div class="stat-tag">// received</div><div class="stat-val" id="s-paid">₹0</div><div class="stat-sub" id="s-paid-c">0 paid</div></div>
-      <div class="stat a"><div class="stat-glow"></div><div class="stat-tag">// outstanding</div><div class="stat-val" id="s-pend">₹0</div><div class="stat-sub" id="s-pend-c">0 pending</div></div>
+      <div class="stat c"><div class="stat-glow"></div><div class="stat-tag">// total invoiced</div><div class="stat-val" id="s-total">Rs.0</div><div class="stat-sub" id="s-total-c">0 invoices</div></div>
+      <div class="stat g"><div class="stat-glow"></div><div class="stat-tag">// received</div><div class="stat-val" id="s-paid">Rs.0</div><div class="stat-sub" id="s-paid-c">0 paid</div></div>
+      <div class="stat a"><div class="stat-glow"></div><div class="stat-tag">// outstanding</div><div class="stat-val" id="s-pend">Rs.0</div><div class="stat-sub" id="s-pend-c">0 pending</div></div>
       <div class="stat p"><div class="stat-glow"></div><div class="stat-tag">// proposals</div><div class="stat-val" id="s-boq">0</div><div class="stat-sub" id="s-boq-c">BOQ documents</div></div>
     </div>
     <div class="sec-head"><div class="sec-title">Recent Invoices</div><button class="btn btn-ghost btn-sm" onclick="goTo('invoices')">View All →</button></div>
@@ -517,6 +521,50 @@ select option{background:var(--surface2);}
         <div id="cr-ok" style="margin-top:12px;background:rgba(0,255,179,0.08);border:1px solid rgba(0,255,179,0.2);color:var(--green);border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);display:none;">✓ Credentials updated successfully</div>
         <button class="btn btn-cyan" style="margin-top:16px;" onclick="changeCredentials()">Update Credentials</button>
       </div>
+
+      <div class="settings-card" style="margin-top:24px;">
+        <div class="settings-card-title">Backup &amp; Restore Data</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <!-- BACKUP -->
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">📦 Backup</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6;">Export all your data — invoices, BOQs, clients, projects, and settings — as a <span style="color:var(--cyan);font-family:var(--font-mono)">.json</span> file. Store it safely to restore later.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-cyan" onclick="backupData()">⬇ Download Backup</button>
+              <button class="btn btn-ghost" onclick="backupStats()" id="backup-stats-btn">View Stats</button>
+            </div>
+            <div id="backup-stats" style="display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:2;"></div>
+          </div>
+          <!-- RESTORE -->
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">📂 Restore</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6;">Import a previously exported backup file. Records from the backup will be <span style="color:var(--green);">merged</span> with your current data — duplicates (by ID/number) are skipped. <span style="color:var(--cyan);">Your existing data is preserved.</span></div>
+            <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" id="restore-label">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Choose Backup File
+              <input type="file" accept=".json" style="display:none" onchange="restoreData(this)" id="restore-input"/>
+            </label>
+            <div id="restore-msg" style="margin-top:12px;display:none;border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECYCLE BIN -->
+  <div id="pg-trash" class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div style="font-size:13px;color:var(--text3);">Items deleted in the last <span style="color:var(--amber)">30 days</span> can be restored.</div>
+      <button class="btn btn-danger btn-sm" onclick="emptyTrash()" id="empty-trash-btn" style="display:none">🗑 Empty Bin</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTrashTab('invoices',this)">Invoices</button>
+      <button class="tab" onclick="switchTrashTab('boqs',this)">BOQs</button>
+      <button class="tab" onclick="switchTrashTab('clients',this)">Clients</button>
+      <button class="tab" onclick="switchTrashTab('projects',this)">Projects</button>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead id="trash-thead"></thead><tbody id="trash-tbody"></tbody></table>
     </div>
   </div>
 </main>
@@ -547,7 +595,7 @@ select option{background:var(--surface2);}
           <th style="width:11%">HSN</th>
           <th style="width:11%">Unit</th>
           <th style="width:8%">Qty</th>
-          <th style="width:16%">Rate (₹)</th>
+          <th style="width:16%">Rate</th>
           <th style="width:14%">Amount</th>
           <th style="width:7%"></th>
         </tr></thead>
@@ -562,10 +610,10 @@ select option{background:var(--surface2);}
         <textarea id="i-notes" placeholder="Bank details, terms, additional notes..."></textarea>
       </div>
       <div class="totals-box">
-        <div class="tot-row"><span class="tot-label">Subtotal</span><span class="tot-val" id="t-sub">₹0.00</span></div>
-        <div class="tot-row"><span class="tot-label">CGST</span><span class="tot-val" id="t-cgst">₹0.00</span></div>
-        <div class="tot-row"><span class="tot-label">SGST</span><span class="tot-val" id="t-sgst">₹0.00</span></div>
-        <div class="tot-row"><span class="tot-label">Grand Total</span><span id="t-grand">₹0.00</span></div>
+        <div class="tot-row"><span class="tot-label">Subtotal</span><span class="tot-val" id="t-sub">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">CGST</span><span class="tot-val" id="t-cgst">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">SGST</span><span class="tot-val" id="t-sgst">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">Grand Total</span><span id="t-grand">Rs.0.00</span></div>
       </div>
     </div>
     <div class="divider"></div>
@@ -597,13 +645,14 @@ select option{background:var(--surface2);}
     <div style="overflow-x:auto;">
       <table class="li-table">
         <thead><tr>
-          <th style="width:6%">#</th>
-          <th style="width:32%">Description of Work / Deliverable</th>
-          <th style="width:14%">Category</th>
-          <th style="width:9%">Unit</th>
-          <th style="width:10%">Qty</th>
-          <th style="width:14%">Rate (₹)</th>
-          <th style="width:8%">Amount</th>
+          <th style="width:5%">#</th>
+          <th style="width:10%">Section</th>
+          <th style="width:30%">Description of Work / Deliverable</th>
+          <th style="width:8%">Unit</th>
+          <th style="width:8%">Qty</th>
+          <th style="width:12%">Rate</th>
+          <th style="width:8%">GST %</th>
+          <th style="width:12%">Amount</th>
           <th style="width:7%"></th>
         </tr></thead>
         <tbody id="bi-body"></tbody>
@@ -612,14 +661,22 @@ select option{background:var(--surface2);}
     <button class="btn btn-ghost btn-sm" style="margin-bottom:18px;" onclick="addBI()">+ Add Item</button>
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;">
-      <div class="fg" style="flex:1;min-width:200px;max-width:280px;">
-        <label>Assumptions / Exclusions</label>
-        <textarea id="b-notes" placeholder="Scope exclusions, assumptions, dependencies..."></textarea>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:14px;">
+        <div class="fg">
+          <label>Assumptions / Exclusions</label>
+          <textarea id="b-notes" placeholder="Scope exclusions, assumptions, dependencies..."></textarea>
+        </div>
+        <div class="fg">
+          <label>Terms &amp; Conditions</label>
+          <textarea id="b-terms" placeholder="e.g. Payment due within 30 days. Prices valid for 30 days. Taxes applicable as per government norms..." style="min-height:90px;"></textarea>
+        </div>
       </div>
       <div class="totals-box">
-        <div class="tot-row"><span class="tot-label">Subtotal</span><span class="tot-val" id="bt-sub">₹0.00</span></div>
-        <div class="tot-row"><span class="tot-label">GST (18%)</span><span class="tot-val" id="bt-gst">₹0.00</span></div>
-        <div class="tot-row"><span class="tot-label">Grand Total</span><span id="bt-grand">₹0.00</span></div>
+        <div class="tot-row"><span class="tot-label">🔩 Material</span><span class="tot-val" id="bt-mat">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">⚙ Service</span><span class="tot-val" id="bt-svc">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">Subtotal</span><span class="tot-val" id="bt-sub">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label" id="bt-gst-label">GST</span><span class="tot-val" id="bt-gst">Rs.0.00</span></div>
+        <div class="tot-row"><span class="tot-label">Grand Total</span><span id="bt-grand">Rs.0.00</span></div>
       </div>
     </div>
     <div class="divider"></div>
@@ -677,7 +734,7 @@ select option{background:var(--surface2);}
       </div>
       <div class="fg"><label>Start Date</label><input id="p-start" type="date"/></div>
       <div class="fg"><label>End Date</label><input id="p-end" type="date"/></div>
-      <div class="fg"><label>Contract Value (₹)</label><input id="p-val" type="number" placeholder="500000"/></div>
+      <div class="fg"><label>Contract Value</label><input id="p-val" type="number" placeholder="500000"/></div>
       <div class="fg"><label>Status</label>
         <select id="p-status"><option value="active">Active</option><option value="completed">Completed</option><option value="on-hold">On Hold</option><option value="cancelled">Cancelled</option></select>
       </div>
@@ -706,16 +763,64 @@ select option{background:var(--surface2);}
 </div>
 
 <script>
+// ===== INDEXEDDB DATABASE =====
+const DB_NAME='billed_db', DB_VERSION=1, DB_STORE='appdata';
+let _db=null;
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    if(_db){resolve(_db);return;}
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(DB_STORE))db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess=e=>{_db=e.target.result;resolve(_db);};
+    req.onerror=e=>reject(e.target.error);
+  });
+}
+function dbGet(key){
+  return openDB().then(db=>new Promise((resolve,reject)=>{
+    const req=db.transaction(DB_STORE,'readonly').objectStore(DB_STORE).get(key);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=e=>reject(e.target.error);
+  }));
+}
+function dbSet(key,val){
+  return openDB().then(db=>new Promise((resolve,reject)=>{
+    const req=db.transaction(DB_STORE,'readwrite').objectStore(DB_STORE).put(val,key);
+    req.onsuccess=()=>resolve();
+    req.onerror=e=>reject(e.target.error);
+  }));
+}
+
 // ===== DATA =====
 let D = {
   settings:{name:'',gstn:'',pan:'',cin:'',email:'',phone:'',addr:'',prefix:'INV',gst:18,currency:'₹',terms:'Net 30',hsn:'',state:'27',bank:'',acno:'',ifsc:'',branch:''},
-  clients:[],projects:[],invoices:[],boqs:[],
+  clients:[],projects:[],invoices:[],boqs:[],trash:[],
   ic:1,bc:1,cc:1,pc:1
 };
-try{const s=localStorage.getItem('billed_it');if(s)D=JSON.parse(s);}catch(e){}
-const save=()=>{try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}};
+
+// save() — writes to IndexedDB (primary) + localStorage (fallback)
+const save=()=>{
+  dbSet('billed_it', JSON.parse(JSON.stringify(D))).catch(()=>{});
+  try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
+};
+
+// loadData() — try IndexedDB first, fallback to localStorage
+async function loadData(){
+  try{
+    const d=await dbGet('billed_it');
+    if(d&&typeof d==='object'){Object.assign(D,d);if(!D.trash)D.trash=[];return;}
+  }catch(e){}
+  try{
+    const s=localStorage.getItem('billed_it');
+    if(s){const p=JSON.parse(s);Object.assign(D,p);if(!D.trash)D.trash=[];}
+  }catch(e){}
+}
 const fmt=v=>(D.settings.currency||'₹')+Number(v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtN=v=>Number(v).toLocaleString('en-IN',{minimumFractionDigits:2});
+const cur=()=>D.settings.currency||'₹';
 
 let li=[],bi=[],editInvIdx=null,editBOQIdx=null,invFilter='all';
 
@@ -733,7 +838,7 @@ function goTo(pg){
     else if(pg==='projects'&&t.startsWith('pro'))n.classList.add('active');
     else if(pg==='settings'&&t.startsWith('set'))n.classList.add('active');
   });
-  const titles={dashboard:'Dashboard',invoices:'Invoices',boq:'BOQ / Proposals',clients:'Clients',projects:'Projects',settings:'Settings'};
+  const titles={dashboard:'Dashboard',invoices:'Invoices',boq:'BOQ / Proposals',clients:'Clients',projects:'Projects',settings:'Settings',trash:'Recycle Bin'};
   document.getElementById('pg-title').textContent=titles[pg]||pg;
   document.getElementById('bc-page').textContent=pg;
   const tb=document.getElementById('topbar-btns');
@@ -741,6 +846,7 @@ function goTo(pg){
   else if(pg==='boq')tb.innerHTML='<button class="btn btn-cyan" onclick="openBOQModal()">+ New BOQ</button>';
   else if(pg==='clients')tb.innerHTML='<button class="btn btn-cyan" onclick="openClientModal()">+ Add Client</button>';
   else if(pg==='projects')tb.innerHTML='<button class="btn btn-cyan" onclick="openProjModal()">+ Add Project</button>';
+  else if(pg==='settings')tb.innerHTML='';
   else tb.innerHTML='';
   if(pg==='dashboard')renderDash();
   if(pg==='invoices')renderInvTable();
@@ -748,6 +854,7 @@ function goTo(pg){
   if(pg==='clients')renderCliTable();
   if(pg==='projects')renderProjTable();
   if(pg==='settings')loadSettings();
+  if(pg==='trash'){renderTrash();switchTrashTab(currentTrashTab);}
 }
 
 // ===== DASHBOARD =====
@@ -813,7 +920,7 @@ function filterInv(f,el){
   el.classList.add('active');
   renderInvTable(f);
 }
-function delInv(i){if(confirm('Delete invoice?')){D.invoices.splice(i,1);save();renderInvTable();}}
+function delInv(i){if(confirm('Move this invoice to Recycle Bin?')){const item=D.invoices.splice(i,1)[0];D.trash.push({type:'invoice',item,deletedAt:Date.now()});save();renderInvTable();updateTrashBadge();}}
 
 // ===== BOQ TABLE =====
 function renderBOQTable(){
@@ -831,13 +938,160 @@ function renderBOQTable(){
       <td class="mono">${b.items.length}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-sm" onclick="editBOQfn(${idx})">Edit</button>
-        <button class="btn btn-success btn-sm" onclick="boqToInv(${idx})">→ Invoice</button>
+        <button class="btn btn-success btn-sm" onclick="downloadBOQPDF(${idx})">⬇ PDF</button>
+        <button class="btn btn-purple btn-sm" onclick="boqToInv(${idx})">→ Invoice</button>
         <button class="btn btn-danger btn-sm" onclick="delBOQ(${idx})">Del</button>
       </td>
     </tr>`;
   }).join('');
 }
-function delBOQ(i){if(confirm('Delete BOQ?')){D.boqs.splice(i,1);save();renderBOQTable();}}
+function delBOQ(i){if(confirm('Move this BOQ to Recycle Bin?')){const item=D.boqs.splice(i,1)[0];D.trash.push({type:'boq',item,deletedAt:Date.now()});save();renderBOQTable();updateTrashBadge();}}
+
+function downloadBOQPDF(idx){
+  const b=D.boqs[idx];
+  const s=D.settings;
+  const C=s.currency||'₹';  // capture currency symbol for use in PDF template
+  const Cp=C==='₹'?'&#x20B9;':C;  // HTML entity for rupee - renders correctly in all PDF renderers
+  const client=D.clients.find(c=>c.id==b.clientId);
+  const clientAddr=client?[client.addr,client.city,client.state].filter(Boolean).join(', '):'';
+  const clientGstn=client?client.gstn:'';
+  const wordsTotal=numberToWords(b.grand);
+
+  // Group items by section
+  const matItems=b.items.filter(x=>x.section==='Material');
+  const svcItems=b.items.filter(x=>x.section==='Service');
+  const matSub=matItems.reduce((s,x)=>s+x.qty*x.rate,0);
+  const svcSub=svcItems.reduce((s,x)=>s+x.qty*x.rate,0);
+
+  function renderRows(items, startIdx){
+    return items.map((x,i)=>{
+      const a=x.qty*x.rate;
+      const g=a*(x.gst/100);
+      return`<tr>
+        <td>${startIdx+i+1}</td>
+        <td style="font-weight:600">${x.desc||'—'}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${x.unit}</td>
+        <td>${x.qty}</td>
+        <td>${Cp}${fmtN(x.rate)}</td>
+        <td>${x.gst}%</td>
+        <td>${Cp}${fmtN(g)}</td>
+        <td>${Cp}${fmtN(a)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function sectionHeader(label, color){
+    return`<tr><td colspan="8" style="background:${color};font-weight:700;font-size:12px;padding:7px 10px;letter-spacing:0.05em;text-transform:uppercase;">${label}</td></tr>`;
+  }
+
+  const tableRows=(matItems.length?sectionHeader('🔩 Material','#fff8e1')+renderRows(matItems,0):'')+
+    (svcItems.length?sectionHeader('⚙ Service','#e8f4fd')+renderRows(svcItems,matItems.length):'');
+
+  const html=`<!DOCTYPE html><html><head><title>${b.number} – BOQ</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700;800&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&display=swap');</style>
+  <style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Outfit','Noto Sans',sans-serif;background:#fff;color:#111;padding:32px;}
+  .wrap{max-width:820px;margin:auto;}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+  .co-name{font-size:22px;font-weight:800;color:#0a0a14;letter-spacing:-0.03em;}
+  .co-sub{font-size:11px;color:#777;margin-top:2px;}
+  .badge{background:#07080c;color:#00e5ff;font-size:17px;font-weight:800;padding:6px 14px;border-radius:8px;letter-spacing:-0.02em;}
+  .ref{font-size:11px;color:#666;text-align:right;margin-top:5px;font-family:'JetBrains Mono',monospace;}
+  .stripe{height:3px;background:linear-gradient(90deg,#ffb300,#00e5ff,#00ffb3);border-radius:2px;margin:16px 0;}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:18px;}
+  .pty-lbl{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+  .pty-name{font-size:14px;font-weight:700;}
+  .pty-det{font-size:11px;color:#666;margin-top:2px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+  th{background:#f1f5f9;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.05em;}
+  td{padding:8px 10px;border-bottom:1px solid #eef0f5;}
+  .totbox{background:#07080c;color:#fff;border-radius:10px;padding:16px;width:280px;margin-left:auto;margin-bottom:14px;}
+  .totr{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;border-bottom:1px solid #1a1f30;font-family:'JetBrains Mono',monospace;}
+  .totr:last-child{border-bottom:none;font-size:13px;color:#00e5ff;padding-top:8px;font-weight:700;}
+  .totr .lbl{color:#888;}
+  .words-box{background:#f0fdf9;border:1px solid #bbf7e0;border-radius:8px;padding:10px 14px;margin-bottom:14px;}
+  .words-lbl{font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;}
+  .words-val{font-size:13px;font-weight:600;color:#065f46;font-style:italic;}
+  .bank-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:14px;}
+  .bank-lbl{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  .bank-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;}
+  .bank-item .k{font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;display:block;}
+  .bank-item .v{font-weight:600;color:#1e293b;font-size:12px;}
+  .notes-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;}
+  .notes-lbl{font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+  .tc-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-bottom:16px;}
+  .tc-lbl{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  .tc-list{font-size:12px;color:#374151;line-height:1.7;white-space:pre-wrap;}
+  .footer{margin-top:24px;padding-top:14px;border-top:1px solid #e8edf4;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:#aaa;}
+  .sig-line{width:140px;border-top:1px solid #ccc;text-align:center;padding-top:5px;font-size:10px;color:#aaa;}
+  </style></head><body><div class="wrap">
+  <div class="head">
+    <div>
+      <div class="co-name">${s.name||'Your Company'}</div>
+      <div class="co-sub">${s.email||''}${s.phone?' · '+s.phone:''}</div>
+      <div class="co-sub">${s.addr||''}</div>
+      <div class="co-sub" style="font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:4px;">GSTN: ${s.gstn||'—'} | PAN: ${s.pan||'—'}</div>
+    </div>
+    <div>
+      <div class="badge">BILL OF QUANTITIES</div>
+      <div class="ref">${b.number}<br/>${b.date}${b.valid?' · Valid till: '+b.valid:''}</div>
+    </div>
+  </div>
+  <div class="stripe"></div>
+  <div class="parties">
+    <div>
+      <div class="pty-lbl">Prepared For</div>
+      <div class="pty-name">${b.clientName||'—'}</div>
+      ${clientAddr?`<div class="pty-det">${clientAddr}</div>`:''}
+      ${clientGstn?`<div class="pty-det" style="font-family:'JetBrains Mono',monospace;font-size:11px;">GSTN: ${clientGstn}</div>`:''}
+    </div>
+    <div>
+      <div class="pty-lbl">Project / Subject</div>
+      <div class="pty-name">${b.project||b.title||'—'}</div>
+      ${b.title&&b.project?`<div class="pty-det">${b.title}</div>`:''}
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>#</th><th>Description</th><th>Unit</th><th>Qty</th><th>Rate</th><th>GST%</th><th>GST Amt</th><th>Amount</th></tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+
+  <div class="totbox">
+    ${matItems.length?`<div class="totr"><span class="lbl">🔩 Material</span><span>${Cp}${fmtN(matSub)}</span></div>`:''}
+    ${svcItems.length?`<div class="totr"><span class="lbl">⚙ Service</span><span>${Cp}${fmtN(svcSub)}</span></div>`:''}
+    <div class="totr"><span class="lbl">Subtotal</span><span>${Cp}${fmtN(b.subtotal)}</span></div>
+    <div class="totr"><span class="lbl">GST</span><span>${Cp}${fmtN(b.gstAmt)}</span></div>
+    <div class="totr"><span class="lbl">Grand Total</span><span>${Cp}${fmtN(b.grand)}</span></div>
+  </div>
+
+  <div class="words-box"><div class="words-lbl">Amount in Words</div><div class="words-val">${wordsTotal}</div></div>
+
+  ${s.bank||s.acno?`<div class="bank-box"><div class="bank-lbl">Bank Details</div><div class="bank-grid">
+    ${s.bank?`<div class="bank-item"><span class="k">Bank</span><span class="v">${s.bank}</span></div>`:''}
+    ${s.acno?`<div class="bank-item"><span class="k">Account No.</span><span class="v" style="font-family:'JetBrains Mono',monospace">${s.acno}</span></div>`:''}
+    ${s.ifsc?`<div class="bank-item"><span class="k">IFSC</span><span class="v" style="font-family:'JetBrains Mono',monospace">${s.ifsc}</span></div>`:''}
+    ${s.branch?`<div class="bank-item"><span class="k">Branch</span><span class="v">${s.branch}</span></div>`:''}
+  </div></div>`:''}
+
+  ${b.notes?`<div class="notes-box"><div class="notes-lbl">Assumptions / Exclusions</div><div>${b.notes.replace(/\n/g,'<br/>')}</div></div>`:''}
+
+  ${b.terms?`<div class="tc-box"><div class="tc-lbl">Terms &amp; Conditions</div><div class="tc-list">${b.terms.replace(/\n/g,'<br/>')}</div></div>`:''}
+
+  <div class="footer">
+    <div>This is a computer-generated BOQ document.</div>
+    <div class="sig-line">Authorised Signatory</div>
+  </div>
+</div></body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(w){setTimeout(()=>{w.document.title=b.number+'-BOQ';w.print();},900);}
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 
 // ===== CLIENTS =====
 function renderCliTable(){
@@ -851,7 +1105,7 @@ function renderCliTable(){
     <td><button class="btn btn-danger btn-sm" onclick="delCli(${i})">Del</button></td>
   </tr>`).join('');
 }
-function delCli(i){if(confirm('Delete client?')){D.clients.splice(i,1);save();renderCliTable();}}
+function delCli(i){if(confirm('Move this client to Recycle Bin?')){const item=D.clients.splice(i,1)[0];D.trash.push({type:'client',item,deletedAt:Date.now()});save();renderCliTable();updateTrashBadge();}}
 
 // ===== PROJECTS =====
 function renderProjTable(){
@@ -869,7 +1123,7 @@ function renderProjTable(){
     <td><button class="btn btn-danger btn-sm" onclick="delProj(${i})">Del</button></td>
   </tr>`).join('');
 }
-function delProj(i){if(confirm('Delete project?')){D.projects.splice(i,1);save();renderProjTable();}}
+function delProj(i){if(confirm('Move this project to Recycle Bin?')){const item=D.projects.splice(i,1)[0];D.trash.push({type:'project',item,deletedAt:Date.now()});save();renderProjTable();updateTrashBadge();}}
 
 // ===== SETTINGS =====
 function loadSettings(){
@@ -942,9 +1196,8 @@ function editInv(idx){openInvModal(idx);}
 
 // ===== LINE ITEMS =====
 const IT_UNITS=['MTR','EA'];
-const IT_CATS=['Development','Design','Consulting','DevOps','Support','QA/Testing','Project Management','Infrastructure','Other'];
 
-function addLI(){li.push({desc:'',hsn:D.settings.hsn||'',unit:'Hours',qty:1,rate:0});renderLI();}
+function addLI(){li.push({desc:'',hsn:D.settings.hsn||'',unit:'MTR',qty:1,rate:0});renderLI();}
 function renderLI(){
   document.getElementById('li-body').innerHTML=li.map((x,i)=>`
     <tr>
@@ -1008,6 +1261,7 @@ function openBOQModal(idx){
     document.getElementById('b-date').value=b.date;
     document.getElementById('b-valid').value=b.valid||'';
     document.getElementById('b-notes').value=b.notes||'';
+    document.getElementById('b-terms').value=b.terms||'';
     bi=b.items.map(x=>({...x}));
   } else {
     document.getElementById('b-num').value='BOQ-'+String(D.bc).padStart(3,'0');
@@ -1017,6 +1271,7 @@ function openBOQModal(idx){
     document.getElementById('b-date').value=new Date().toISOString().split('T')[0];
     document.getElementById('b-valid').value='';
     document.getElementById('b-notes').value='';
+    document.getElementById('b-terms').value='';
     addBI();
   }
   renderBI();calcBTots();
@@ -1024,31 +1279,52 @@ function openBOQModal(idx){
 }
 function editBOQfn(idx){openBOQModal(idx);}
 
-function addBI(){bi.push({desc:'',cat:'Development',unit:'Hours',qty:0,rate:0});renderBI();}
+const BOQ_GST_RATES=[0,5,12,18,28];
+
+function addBI(){bi.push({desc:'',section:'Material',unit:'MTR',qty:0,rate:0,gst:18});renderBI();}
 function renderBI(){
-  document.getElementById('bi-body').innerHTML=bi.map((x,i)=>`
-    <tr>
+  document.getElementById('bi-body').innerHTML=bi.map((x,i)=>{
+    const sectionColor=x.section==='Material'?'color:var(--amber)':'color:var(--cyan)';
+    const sectionBg=x.section==='Material'?'background:rgba(255,179,0,0.08);border-color:rgba(255,179,0,0.2)':'background:rgba(0,229,255,0.06);border-color:rgba(0,229,255,0.15)';
+    return`<tr>
       <td style="color:var(--text3);font-family:var(--font-mono);font-size:11px;text-align:center">${i+1}</td>
-      <td><input type="text" value="${x.desc}" oninput="bi[${i}].desc=this.value" placeholder="Deliverable / work item"/></td>
-      <td><select onchange="bi[${i}].cat=this.value">${IT_CATS.map(c=>`<option${x.cat===c?' selected':''}>${c}</option>`).join('')}</select></td>
+      <td>
+        <select onchange="bi[${i}].section=this.value;renderBI()" style="${sectionBg};${sectionColor};font-weight:600;font-size:11px;">
+          <option value="Material"${x.section==='Material'?' selected':''}>🔩 Material</option>
+          <option value="Service"${x.section==='Service'?' selected':''}>⚙ Service</option>
+        </select>
+      </td>
+      <td><input type="text" value="${x.desc}" oninput="bi[${i}].desc=this.value" placeholder="Description of item / work"/></td>
       <td><select onchange="bi[${i}].unit=this.value">${IT_UNITS.map(u=>`<option${x.unit===u?' selected':''}>${u}</option>`).join('')}</select></td>
       <td><input type="number" min="0" value="${x.qty}" oninput="bi[${i}].qty=+this.value;calcBTots()" style="width:60px"/></td>
       <td><input type="number" min="0" value="${x.rate}" oninput="bi[${i}].rate=+this.value;calcBTots()" style="width:90px"/></td>
+      <td>
+        <select onchange="bi[${i}].gst=+this.value;calcBTots()" style="width:58px">
+          ${BOQ_GST_RATES.map(r=>`<option value="${r}"${x.gst===r?' selected':''}>${r}%</option>`).join('')}
+        </select>
+      </td>
       <td class="li-amount">${fmt(x.qty*x.rate)}</td>
       <td><button class="btn btn-danger btn-sm" onclick="remBI(${i})">✕</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
   calcBTots();
 }
 function remBI(i){bi.splice(i,1);renderBI();}
 function calcBTots(){
-  const sub=bi.reduce((s,x)=>s+x.qty*x.rate,0);
-  const gst=sub*(Number(D.settings.gst)||18)/100;
-  const grand=sub+gst;
+  let matSub=0,svcSub=0,gstAmt=0;
+  bi.forEach(x=>{
+    const a=x.qty*x.rate;
+    if(x.section==='Material')matSub+=a; else svcSub+=a;
+    gstAmt+=a*(x.gst/100);
+  });
+  const sub=matSub+svcSub;
+  const grand=sub+gstAmt;
+  document.getElementById('bt-mat').textContent=fmt(matSub);
+  document.getElementById('bt-svc').textContent=fmt(svcSub);
   document.getElementById('bt-sub').textContent=fmt(sub);
-  document.getElementById('bt-gst').textContent=fmt(gst);
+  document.getElementById('bt-gst').textContent=fmt(gstAmt);
   document.getElementById('bt-grand').textContent=fmt(grand);
-  return{sub,gst,grand};
+  return{sub,gst:gstAmt,grand,matSub,svcSub};
 }
 function saveBOQ(){
   const cid=document.getElementById('b-client').value;
@@ -1062,6 +1338,7 @@ function saveBOQ(){
     date:document.getElementById('b-date').value,
     valid:document.getElementById('b-valid').value,
     notes:document.getElementById('b-notes').value,
+    terms:document.getElementById('b-terms').value,
     items:bi.map(x=>({...x})),
     subtotal:sub,gstAmt:gst,grand,
   };
@@ -1162,8 +1439,8 @@ function numberToWords(n){
 function showPreview(inv){
   _currentPreviewInv=inv;
   const s=D.settings;
-  const gstRate=Number(s.gst)||18;
-  const wordsTotal=numberToWords(inv.grand);
+  const C=s.currency||'₹';
+  const Cp=C==='₹'?'&#x20B9;':C;
   const html=`<div class="inv-preview">
     <div class="inv-pre-head">
       <div>
@@ -1198,17 +1475,17 @@ function showPreview(inv){
           <td>${i+1}</td><td style="font-weight:600">${x.desc||'—'}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${x.hsn||'—'}</td>
           <td>${x.unit}</td><td>${x.qty}</td>
-          <td>₹${fmtN(x.rate)}</td><td>₹${fmtN(a)}</td>
+          <td>${C}${fmtN(x.rate)}</td><td>${C}${fmtN(a)}</td>
         </tr>`;}).join('')}
       </tbody>
     </table>
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
       <div class="inv-totbox">
-        <div class="inv-totr"><span class="lbl">Subtotal</span><span>₹${fmtN(inv.subtotal)}</span></div>
-        <div class="inv-totr"><span class="lbl">CGST (${gstRate/2}%)</span><span>₹${fmtN(inv.gstAmt/2)}</span></div>
-        <div class="inv-totr"><span class="lbl">SGST (${gstRate/2}%)</span><span>₹${fmtN(inv.gstAmt/2)}</span></div>
-        <div class="inv-totr"><span class="lbl">Grand Total</span><span>₹${fmtN(inv.grand)}</span></div>
+        <div class="inv-totr"><span class="lbl">Subtotal</span><span>${C}${fmtN(inv.subtotal)}</span></div>
+        <div class="inv-totr"><span class="lbl">CGST (${gstRate/2}%)</span><span>${C}${fmtN(inv.gstAmt/2)}</span></div>
+        <div class="inv-totr"><span class="lbl">SGST (${gstRate/2}%)</span><span>${C}${fmtN(inv.gstAmt/2)}</span></div>
+        <div class="inv-totr"><span class="lbl">Grand Total</span><span>${C}${fmtN(inv.grand)}</span></div>
       </div>
     </div>
 
@@ -1239,10 +1516,10 @@ function showPreview(inv){
 }
 function getInvoicePrintHTML(c){
   return`<html><head><title>Invoice</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Outfit',sans-serif;background:#fff;padding:30px;color:#111;}
+  body{font-family:'Outfit','Noto Sans',sans-serif;background:#fff;padding:30px;color:#111;}
   .inv-preview{max-width:800px;margin:auto;}
   .inv-pre-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
   .inv-co-name{font-size:20px;font-weight:800;color:#0a0a14;letter-spacing:-0.03em;}
@@ -1300,11 +1577,15 @@ function downloadInvoicePDF(){
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
+
+
 function downloadInvoiceHTML(idx){
   const inv=D.invoices[idx];
   const client=D.clients.find(c=>c.id==inv.clientId);
   const fullInv={...inv,clientAddr:client?[client.addr,client.city,client.state].filter(Boolean).join(', '):'',clientGstn:client?client.gstn:''};
   const s=D.settings;
+  const C=s.currency||'₹';
+  const Cp=C==='₹'?'&#x20B9;':C;
   const gstRate=Number(s.gst)||18;
   const sub=inv.subtotal,gstAmt=inv.gstAmt,grand=inv.grand;
   const wordsTotal=numberToWords(grand);
@@ -1337,15 +1618,15 @@ function downloadInvoiceHTML(idx){
     </div>
     <table>
       <thead><tr><th>#</th><th>Description</th><th>HSN</th><th>Unit</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
-      <tbody>${inv.items.map((x,i)=>{const a=x.qty*x.rate;return`<tr><td>${i+1}</td><td style="font-weight:600">${x.desc||'—'}</td><td style="font-family:'JetBrains Mono',monospace">${x.hsn||'—'}</td><td>${x.unit}</td><td>${x.qty}</td><td>₹${fmtN(x.rate)}</td><td>₹${fmtN(a)}</td></tr>`;}).join('')}</tbody>
+      <tbody>${inv.items.map((x,i)=>{const a=x.qty*x.rate;return`<tr><td>${i+1}</td><td style="font-weight:600">${x.desc||'—'}</td><td style="font-family:'JetBrains Mono',monospace">${x.hsn||'—'}</td><td>${x.unit}</td><td>${x.qty}</td><td>${Cp}${fmtN(x.rate)}</td><td>${Cp}${fmtN(a)}</td></tr>`;}).join('')}</tbody>
     </table>
 
     <div style="margin-bottom:14px;">
       <div class="inv-totbox">
-        <div class="inv-totr"><span class="lbl">Subtotal</span><span>₹${fmtN(sub)}</span></div>
-        <div class="inv-totr"><span class="lbl">CGST (${gstRate/2}%)</span><span>₹${fmtN(gstAmt/2)}</span></div>
-        <div class="inv-totr"><span class="lbl">SGST (${gstRate/2}%)</span><span>₹${fmtN(gstAmt/2)}</span></div>
-        <div class="inv-totr"><span class="lbl">Grand Total</span><span>₹${fmtN(grand)}</span></div>
+        <div class="inv-totr"><span class="lbl">Subtotal</span><span>${Cp}${fmtN(sub)}</span></div>
+        <div class="inv-totr"><span class="lbl">CGST (${gstRate/2}%)</span><span>${Cp}${fmtN(gstAmt/2)}</span></div>
+        <div class="inv-totr"><span class="lbl">SGST (${gstRate/2}%)</span><span>${Cp}${fmtN(gstAmt/2)}</span></div>
+        <div class="inv-totr"><span class="lbl">Grand Total</span><span>${Cp}${fmtN(grand)}</span></div>
       </div>
     </div>
 
@@ -1386,7 +1667,10 @@ function getUsers(){
   try{const u=localStorage.getItem('billed_users');return u?JSON.parse(u):DEFAULT_USERS;}
   catch(e){return DEFAULT_USERS;}
 }
-function saveUsers(users){try{localStorage.setItem('billed_users',JSON.stringify(users));}catch(e){}}
+function saveUsers(users){
+  try{localStorage.setItem('billed_users',JSON.stringify(users));}catch(e){}
+  dbSet('billed_users',JSON.parse(JSON.stringify(users))).catch(()=>{});
+}
 function getSession(){try{return localStorage.getItem('billed_session');}catch(e){return null;}}
 function setSession(u){try{localStorage.setItem('billed_session',u);}catch(e){}}
 function clearSession(){try{localStorage.removeItem('billed_session');}catch(e){}}
@@ -1454,20 +1738,304 @@ function changeCredentials(){
   setTimeout(()=>ok.style.display='none',3000);
 }
 
-// Check session on load
-(function(){
+// ===== RECYCLE BIN =====
+let currentTrashTab='invoices';
+
+function updateTrashBadge(){
+  const n=D.trash.length;
+  const badge=document.getElementById('trash-badge');
+  if(badge){badge.textContent=n;badge.style.display=n?'inline':'none';}
+}
+
+function switchTrashTab(tab,el){
+  currentTrashTab=tab;
+  document.querySelectorAll('#pg-trash .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderTrash();
+}
+
+function daysAgo(ts){
+  const d=Math.floor((Date.now()-ts)/86400000);
+  return d===0?'Today':d===1?'Yesterday':d+' days ago';
+}
+
+function renderTrash(){
+  if(!D.trash)D.trash=[];
+  // Auto-purge items older than 30 days
+  const before=D.trash.length;
+  D.trash=D.trash.filter(t=>Date.now()-t.deletedAt<30*86400000);
+  if(D.trash.length!==before)save();
+
+  const items=D.trash.filter(t=>t.type===currentTrashTab.slice(0,-1)||(currentTrashTab==='boqs'&&t.type==='boq'));
+  const emptyBtn=document.getElementById('empty-trash-btn');
+  if(emptyBtn)emptyBtn.style.display=D.trash.length?'inline-flex':'none';
+
+  const thead=document.getElementById('trash-thead');
+  const tbody=document.getElementById('trash-tbody');
+
+  const headers={
+    invoices:'<tr><th>Invoice #</th><th>Client</th><th>Subject</th><th>Date</th><th>Total</th><th>Status</th><th>Deleted</th><th>Actions</th></tr>',
+    boqs:'<tr><th>BOQ #</th><th>Title</th><th>Client</th><th>Project</th><th>Date</th><th>Total</th><th>Deleted</th><th>Actions</th></tr>',
+    clients:'<tr><th>Name</th><th>Company</th><th>GSTN</th><th>Email</th><th>Phone</th><th>Deleted</th><th>Actions</th></tr>',
+    projects:'<tr><th>Project</th><th>Client</th><th>Type</th><th>Value</th><th>Status</th><th>Deleted</th><th>Actions</th></tr>',
+  };
+  thead.innerHTML=headers[currentTrashTab]||'';
+
+  if(!items.length){
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🗑️</div><div class="empty-title">Recycle bin is empty</div><div class="empty-sub">Deleted ${currentTrashTab} will appear here</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML=items.map((t,i)=>{
+    const trashIdx=D.trash.indexOf(t);
+    const del=daysAgo(t.deletedAt);
+    const actions=`<td style="display:flex;gap:4px;">
+      <button class="btn btn-success btn-sm" onclick="restoreItem(${trashIdx})">↩ Restore</button>
+      <button class="btn btn-danger btn-sm" onclick="permDelete(${trashIdx})">✕ Delete</button>
+    </td>`;
+
+    if(currentTrashTab==='invoices'){
+      const x=t.item;
+      return`<tr>
+        <td class="mono">${x.number||'—'}</td>
+        <td>${x.clientName||'—'}</td>
+        <td>${x.subject||'—'}</td>
+        <td class="mono">${x.date||'—'}</td>
+        <td class="mono" style="color:var(--cyan)">${fmt(x.grand||0)}</td>
+        <td><span class="badge badge-${x.status||'draft'}">${x.status||'draft'}</span></td>
+        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
+        ${actions}
+      </tr>`;
+    }
+    if(currentTrashTab==='boqs'){
+      const x=t.item;
+      return`<tr>
+        <td class="mono">${x.number||'—'}</td>
+        <td>${x.title||'—'}</td>
+        <td>${x.clientName||'—'}</td>
+        <td>${x.project||'—'}</td>
+        <td class="mono">${x.date||'—'}</td>
+        <td class="mono" style="color:var(--cyan)">${fmt(x.grand||0)}</td>
+        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
+        ${actions}
+      </tr>`;
+    }
+    if(currentTrashTab==='clients'){
+      const x=t.item;
+      return`<tr>
+        <td>${x.name||'—'}</td>
+        <td>${x.company||'—'}</td>
+        <td class="mono">${x.gstn||'—'}</td>
+        <td>${x.email||'—'}</td>
+        <td class="mono">${x.phone||'—'}</td>
+        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
+        ${actions}
+      </tr>`;
+    }
+    if(currentTrashTab==='projects'){
+      const x=t.item;
+      return`<tr>
+        <td style="font-weight:600">${x.name||'—'}</td>
+        <td>${x.clientName||'—'}</td>
+        <td>${x.type||'—'}</td>
+        <td class="mono">${x.val?fmt(x.val):'—'}</td>
+        <td><span class="badge badge-${x.status==='active'?'paid':x.status==='completed'?'draft':'pending'}">${x.status||'—'}</span></td>
+        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
+        ${actions}
+      </tr>`;
+    }
+    return'';
+  }).join('');
+}
+
+function restoreItem(trashIdx){
+  const t=D.trash[trashIdx];
+  if(!t)return;
+  if(t.type==='invoice')D.invoices.push(t.item);
+  else if(t.type==='boq')D.boqs.push(t.item);
+  else if(t.type==='client')D.clients.push(t.item);
+  else if(t.type==='project')D.projects.push(t.item);
+  D.trash.splice(trashIdx,1);
+  save();renderTrash();updateTrashBadge();
+}
+
+function permDelete(trashIdx){
+  if(!confirm('Permanently delete this item? This cannot be undone.'))return;
+  D.trash.splice(trashIdx,1);
+  save();renderTrash();updateTrashBadge();
+}
+
+function emptyTrash(){
+  if(!confirm('Permanently delete ALL items in the Recycle Bin? This cannot be undone.'))return;
+  D.trash=[];
+  save();renderTrash();updateTrashBadge();
+}
+
+// ===== BACKUP & RESTORE =====
+function backupData(){
+  const payload={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    exportedBy:getSession()||'admin',
+    data:D,
+    users:getUsers(),
+  };
+  const json=JSON.stringify(payload,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().split('T')[0];
+  a.href=url;
+  a.download=`billed-backup-${date}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+
+function backupStats(){
+  const el=document.getElementById('backup-stats');
+  const btn=document.getElementById('backup-stats-btn');
+  if(el.style.display==='block'){el.style.display='none';btn.textContent='View Stats';return;}
+  const dataSize=Math.round(JSON.stringify(D).length/1024);
+  const lines=[
+    `Database &nbsp;&nbsp;&nbsp;: IndexedDB (${DB_NAME})`,
+    `Invoices &nbsp;&nbsp;&nbsp;: ${D.invoices.length}`,
+    `BOQs &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${D.boqs.length}`,
+    `Clients &nbsp;&nbsp;&nbsp;: ${D.clients.length}`,
+    `Projects &nbsp;&nbsp;: ${D.projects.length}`,
+    `Trash &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(D.trash||[]).length} items`,
+    `Data size &nbsp;: ${dataSize} KB`,
+  ];
+  el.innerHTML=lines.join('<br/>');
+  el.style.display='block';
+  btn.textContent='Hide Stats';
+}
+
+function restoreData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const payload=JSON.parse(e.target.result);
+      if(!payload.data||!payload.version){
+        showRestoreMsg('error','Invalid backup file. Please use a BILLED backup.');
+        return;
+      }
+      const exportDate=payload.exportedAt?new Date(payload.exportedAt).toLocaleString():'unknown date';
+      if(!confirm(`Merge backup from ${exportDate} into current data?\n\nExisting records will be kept. Only new records from the backup will be added (duplicates skipped).`)){
+        input.value='';return;
+      }
+
+      const d=payload.data;
+
+      // Helper: merge array by unique key, skip duplicates
+      function mergeById(current, incoming, keyFn){
+        const existing=new Set(current.map(keyFn));
+        const added=[];
+        (incoming||[]).forEach(item=>{
+          const k=keyFn(item);
+          if(!existing.has(k)){current.push(item);existing.add(k);added.push(item);}
+        });
+        return added.length;
+      }
+
+      // Merge each collection — use natural unique keys
+      const addedInv  = mergeById(D.invoices,  d.invoices,  x=>x.number);
+      const addedBOQ  = mergeById(D.boqs,      d.boqs,      x=>x.number);
+      const addedCli  = mergeById(D.clients,   d.clients,   x=>String(x.id||x.name));
+      const addedProj = mergeById(D.projects,  d.projects,  x=>String(x.id||x.name));
+
+      // Merge trash — deduplicate by deletedAt + type + item id/number
+      function trashKey(t){return `${t.type}|${t.deletedAt}|${t.item&&(t.item.number||t.item.id||t.item.name)}`;}
+      const addedTrash= mergeById(D.trash,     d.trash||[], trashKey);
+
+      // Merge settings: only fill in blank fields from backup (don't overwrite current)
+      if(d.settings){
+        Object.keys(d.settings).forEach(k=>{
+          if(!D.settings[k]&&d.settings[k])D.settings[k]=d.settings[k];
+        });
+      }
+
+      // Keep counters at max of current vs backup
+      D.ic=Math.max(D.ic||1,d.ic||1);
+      D.bc=Math.max(D.bc||1,d.bc||1);
+      D.cc=Math.max(D.cc||1,d.cc||1);
+      D.pc=Math.max(D.pc||1,d.pc||1);
+
+      // Merge users: add users from backup that don't exist yet
+      if(payload.users&&Array.isArray(payload.users)){
+        const users=getUsers();
+        const existingUsernames=new Set(users.map(u=>u.username));
+        payload.users.forEach(u=>{if(!existingUsernames.has(u.username))users.push(u);});
+        saveUsers(users);
+      }
+
+      save();
+
+      // Refresh UI
+      document.getElementById('sb-name').textContent=D.settings.name||'Your Company';
+      document.getElementById('sb-gstn').textContent='GSTN · '+(D.settings.gstn||'Not configured');
+      updateTrashBadge();
+      loadSettings();
+      input.value='';
+
+      const summary=[
+        addedInv   ?`${addedInv} invoice${addedInv!==1?'s':''}`:'',
+        addedBOQ   ?`${addedBOQ} BOQ${addedBOQ!==1?'s':''}`:'',
+        addedCli   ?`${addedCli} client${addedCli!==1?'s':''}`:'',
+        addedProj  ?`${addedProj} project${addedProj!==1?'s':''}`:'',
+        addedTrash ?`${addedTrash} trash item${addedTrash!==1?'s':''}`:'',
+      ].filter(Boolean);
+      const msg=summary.length?`✓ Merged: ${summary.join(', ')} added.`:'✓ No new records found — everything was already up to date.';
+      showRestoreMsg('ok', msg);
+    }catch(err){
+      showRestoreMsg('error','Failed to parse backup file: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showRestoreMsg(type,text){
+  const el=document.getElementById('restore-msg');
+  el.style.display='block';
+  if(type==='ok'){
+    el.style.background='rgba(0,255,179,0.08)';
+    el.style.border='1px solid rgba(0,255,179,0.2)';
+    el.style.color='var(--green)';
+  } else {
+    el.style.background='rgba(255,77,109,0.1)';
+    el.style.border='1px solid rgba(255,77,109,0.2)';
+    el.style.color='var(--red)';
+  }
+  el.textContent=text;
+  if(type==='ok')setTimeout(()=>el.style.display='none',5000);
+}
+
+// ===== INIT =====
+// Show a brief loading state then init from IndexedDB
+(async function init(){
+  // Show loading indicator
+  document.querySelector('.main').style.opacity='0';
+  document.querySelector('.main').style.transition='opacity 0.3s';
+
+  await loadData();
+
+  // Update sidebar with loaded settings
+  document.getElementById('sb-name').textContent=D.settings.name||'Your Company';
+  document.getElementById('sb-gstn').textContent='GSTN · '+(D.settings.gstn||'Not configured');
+  if(!D.trash)D.trash=[];
+  updateTrashBadge();
+  renderDash();
+
+  // Check session
   if(!getSession()){
-    // show login, hide app
     document.getElementById('login-screen').style.display='flex';
   } else {
     document.getElementById('login-screen').style.display='none';
   }
-})();
 
-// ===== INIT =====
-renderDash();
-document.getElementById('sb-name').textContent=D.settings.name||'Your Company';
-document.getElementById('sb-gstn').textContent='GSTN · '+(D.settings.gstn||'Not configured');
+  document.querySelector('.main').style.opacity='1';
+})();
 </script>
 </body>
 </html>
