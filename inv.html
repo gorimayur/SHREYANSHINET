@@ -388,10 +388,11 @@ select option{background:var(--surface2);}
     </button>
   </nav>
   <div class="sidebar-bottom">
-    <div style="display:flex;align-items:center;gap:7px;padding:8px 10px 4px;font-size:11px;color:var(--text3);">
+    <div style="display:flex;align-items:center;gap:7px;padding:8px 10px 2px;font-size:11px;color:var(--text3);">
       <span id="cloud-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:all 0.3s;"></span>
       <span id="cloud-status-lbl">Not configured</span>
     </div>
+    <div style="padding:0 10px 6px;font-size:10px;color:var(--text3);font-family:var(--font-mono);">Synced: <span id="cloud-last-sync">Never</span></div>
     <div class="company-pill" onclick="goTo('settings')">
       <div class="cp-name"><span class="cp-dot"></span><span id="sb-name">Your Company</span></div>
       <div class="cp-gstn" id="sb-gstn">GSTN · Not configured</div>
@@ -852,38 +853,54 @@ try{const cc=localStorage.getItem('billed_cloud_cfg');if(cc){const p=JSON.parse(
 function saveCloudCfg(){try{localStorage.setItem('billed_cloud_cfg',JSON.stringify(CLOUD_CFG));}catch(e){}}
 
 let _cloudStatus='unconfigured'; // 'unconfigured' | 'ok' | 'error'
-function setCloudStatus(s,msg){
+function setCloudStatus(s){
   _cloudStatus=s;
+  const colors={ok:'var(--green)',error:'var(--red)',unconfigured:'var(--text3)',syncing:'var(--amber)'};
+  const glows={ok:'0 0 6px var(--green)',syncing:'0 0 6px var(--amber)',error:'none',unconfigured:'none'};
+  const labels={ok:'Cloud connected',error:'Cloud error — using cache',unconfigured:'Not configured',syncing:'Syncing...'};
+  // Update sidebar dot
   const dot=document.getElementById('cloud-status-dot');
   const lbl=document.getElementById('cloud-status-lbl');
-  if(!dot)return;
-  const colors={ok:'var(--green)',error:'var(--red)',unconfigured:'var(--text3)',syncing:'var(--amber)'};
-  dot.style.background=colors[s]||'var(--text3)';
-  dot.style.boxShadow=s==='ok'?'0 0 6px var(--green)':s==='syncing'?'0 0 6px var(--amber)':'none';
-  if(lbl)lbl.textContent={ok:'Cloud connected',error:'Cloud error — using cache',unconfigured:'Not configured',syncing:'Syncing...'}[s]||s;
+  if(dot){dot.style.background=colors[s]||'var(--text3)';dot.style.boxShadow=glows[s]||'none';}
+  if(lbl)lbl.textContent=labels[s]||s;
+  // Update settings card dot
+  updateCloudStatusDot2();
 }
 
 // ── Supabase API ──────────────────────────────────────────
 async function supabaseLoad(){
   const{dbUrl,apiKey,userId}=CLOUD_CFG;
   if(!dbUrl||!apiKey)throw new Error('Supabase not configured');
-  const res=await fetch(`${dbUrl}/rest/v1/billed_data?select=payload&user_id=eq.${userId}&limit=1`,{
+  const res=await fetch(`${dbUrl}/rest/v1/billed_data?select=payload&user_id=eq.${encodeURIComponent(userId)}&limit=1`,{
     headers:{'apikey':apiKey,'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'}
   });
   if(!res.ok)throw new Error('Load failed: HTTP '+res.status+' — check URL and API key');
   const rows=await res.json();
-  if(!rows.length)return null;
-  return typeof rows[0].payload==='string'?JSON.parse(rows[0].payload):rows[0].payload;
+  if(!Array.isArray(rows)||!rows.length)return null;
+  const raw=rows[0].payload;
+  return typeof raw==='string'?JSON.parse(raw):raw;
 }
+
 async function supabaseSave(data){
   const{dbUrl,apiKey,userId}=CLOUD_CFG;
   if(!dbUrl||!apiKey)throw new Error('Supabase not configured');
+  const payload=JSON.stringify(data);
+  const body=JSON.stringify({user_id:userId,payload,updated_at:new Date().toISOString()});
+  // Use upsert with ON CONFLICT update — works whether row exists or not
   const res=await fetch(`${dbUrl}/rest/v1/billed_data`,{
     method:'POST',
-    headers:{'apikey':apiKey,'Authorization':'Bearer '+apiKey,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-    body:JSON.stringify({user_id:userId,payload:JSON.stringify(data),updated_at:new Date().toISOString()})
+    headers:{
+      'apikey':apiKey,
+      'Authorization':'Bearer '+apiKey,
+      'Content-Type':'application/json',
+      'Prefer':'resolution=merge-duplicates,return=minimal'
+    },
+    body
   });
-  if(!res.ok){const t=await res.text().catch(()=>'');throw new Error('Save failed: HTTP '+res.status+(t?' — '+t:''));}
+  if(!res.ok){
+    const t=await res.text().catch(()=>'');
+    throw new Error('Save failed: HTTP '+res.status+(t?' — '+t:''));
+  }
 }
 
 async function cloudLoad(){return await supabaseLoad();}
@@ -892,17 +909,46 @@ async function cloudSave(data){return await supabaseSave(data);}
 // ── save() — local cache immediately + Supabase debounced ─
 let _saveTimer=null;
 const save=()=>{
+  // Always write to local caches immediately (no UI lag)
   cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
   try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
+  // Debounce cloud save 800ms to batch rapid changes
   if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey){
     clearTimeout(_saveTimer);
-    _saveTimer=setTimeout(async()=>{
-      setCloudStatus('syncing');
-      try{await cloudSave(JSON.parse(JSON.stringify(D)));setCloudStatus('ok');}
-      catch(err){console.warn('Supabase save error:',err);setCloudStatus('error');}
-    },800);
+    _saveTimer=setTimeout(()=>pushToCloud(),800);
   }
 };
+
+async function pushToCloud(){
+  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey)return;
+  setCloudStatus('syncing');
+  try{
+    await cloudSave(JSON.parse(JSON.stringify(D)));
+    setCloudStatus('ok');
+    _lastSyncAt=Date.now();
+    updateSyncTime();
+  }catch(err){
+    console.warn('Supabase save error:',err.message);
+    setCloudStatus('error');
+  }
+}
+
+let _lastSyncAt=0;
+function updateSyncTime(){
+  const el=document.getElementById('cloud-last-sync');
+  if(!el)return;
+  if(!_lastSyncAt){el.textContent='Never';return;}
+  const s=Math.round((Date.now()-_lastSyncAt)/1000);
+  el.textContent=s<60?'Just now':s<3600?Math.round(s/60)+'m ago':Math.round(s/3600)+'h ago';
+}
+
+// Auto-sync every 30 seconds when cloud is configured
+setInterval(()=>{
+  if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey&&_cloudStatus!=='syncing'){
+    pushToCloud();
+  }
+  updateSyncTime();
+},30000);
 
 // ── loadData() — Supabase first, fallback to cache ────────
 async function loadData(){
@@ -913,11 +959,15 @@ async function loadData(){
       if(d&&typeof d==='object'){
         Object.assign(D,d);if(!D.trash)D.trash=[];
         cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
-        setCloudStatus('ok');return;
+        setCloudStatus('ok');
+        _lastSyncAt=Date.now();
+        return;
       }
-    }catch(err){console.warn('Supabase load failed, using cache:',err);setCloudStatus('error');}
+    }catch(err){console.warn('Supabase load failed, using cache:',err.message);setCloudStatus('error');}
   } else {setCloudStatus('unconfigured');}
+  // Fallback: IndexedDB
   try{const d=await cacheGet('billed_it');if(d&&typeof d==='object'){Object.assign(D,d);if(!D.trash)D.trash=[];return;}}catch(e){}
+  // Fallback: localStorage
   try{const s=localStorage.getItem('billed_it');if(s){const p=JSON.parse(s);Object.assign(D,p);if(!D.trash)D.trash=[];}}catch(e){}
 }
 
@@ -2003,13 +2053,14 @@ function updateCloudStatusDot2(){
   const d2=document.getElementById('cloud-status-dot2');
   const l2=document.getElementById('cloud-status-lbl2');
   if(!d2)return;
-  if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey){
-    d2.style.background=_cloudStatus==='ok'?'var(--green)':_cloudStatus==='error'?'var(--red)':'var(--amber)';
-    d2.style.boxShadow=_cloudStatus==='ok'?'0 0 6px var(--green)':'none';
-    if(l2)l2.textContent=_cloudStatus==='ok'?'Connected to Supabase':_cloudStatus==='error'?'Connection error — check credentials':'Checking...';
-  } else {
-    d2.style.background='var(--text3)';d2.style.boxShadow='none';
-    if(l2)l2.textContent='Not configured';
+  const colors={ok:'var(--green)',error:'var(--red)',syncing:'var(--amber)',unconfigured:'var(--text3)'};
+  const glows={ok:'0 0 6px var(--green)',syncing:'0 0 6px var(--amber)',error:'none',unconfigured:'none'};
+  d2.style.background=colors[_cloudStatus]||'var(--text3)';
+  d2.style.boxShadow=glows[_cloudStatus]||'none';
+  if(l2){
+    const labels={ok:'Connected to Supabase',error:'Connection error — check credentials',syncing:'Syncing...',unconfigured:'Not configured'};
+    const syncInfo=_lastSyncAt?` · Last sync: ${new Date(_lastSyncAt).toLocaleTimeString()}`:'';
+    l2.textContent=(labels[_cloudStatus]||_cloudStatus)+(_cloudStatus==='ok'?syncInfo:'');
   }
 }
 function saveCloudConfig(){
@@ -2028,9 +2079,11 @@ async function testCloudConnection(){
     const d=await cloudLoad();
     if(d===null){
       await cloudSave(JSON.parse(JSON.stringify(D)));
-      showCloudMsg('ok','✓ Connected! No existing cloud data found — your current data has been uploaded.');
+      _lastSyncAt=Date.now();updateSyncTime();
+      showCloudMsg('ok','✓ Connected! No existing cloud data — your data has been uploaded.');
     } else {
       const inv=(d.invoices||[]).length,cli=(d.clients||[]).length,boq=(d.boqs||[]).length;
+      _lastSyncAt=Date.now();updateSyncTime();
       showCloudMsg('ok',`✓ Connected! Cloud has ${inv} invoice${inv!==1?'s':''}, ${boq} BOQ${boq!==1?'s':''}, ${cli} client${cli!==1?'s':''}.`);
     }
     setCloudStatus('ok');updateCloudStatusDot2();
@@ -2038,12 +2091,11 @@ async function testCloudConnection(){
 }
 async function syncNow(){
   if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){showCloudMsg('error','Not configured.');return;}
-  showCloudMsg('syncing','⏳ Syncing...');setCloudStatus('syncing');
-  try{
-    await cloudSave(JSON.parse(JSON.stringify(D)));
-    showCloudMsg('ok','✓ Synced to Supabase successfully.');
-    setCloudStatus('ok');updateCloudStatusDot2();
-  }catch(err){setCloudStatus('error');updateCloudStatusDot2();showCloudMsg('error','Sync failed: '+err.message);}
+  showCloudMsg('syncing','⏳ Syncing...');
+  await pushToCloud();
+  if(_cloudStatus==='ok'){showCloudMsg('ok','✓ Synced to Supabase successfully.');}
+  else{showCloudMsg('error','Sync failed — check credentials.');}
+  updateCloudStatusDot2();
 }
 function clearCloudConfig(){
   if(!confirm('Disconnect Supabase? Data will be kept in offline cache.'))return;
