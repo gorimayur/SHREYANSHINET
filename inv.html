@@ -1873,557 +1873,152 @@ function downloadInvoiceHTML(idx){
 const DEFAULT_USERS=[{username:'admin',password:'admin123',name:'Admin'}];
 
 function getUsers(){
-  try{const u=localStorage.getItem('billed_users');return u?JSON.parse(u):DEFAULT_USERS;}
-  catch(e){return DEFAULT_USERS;}
+  try{const u=localStorage.getItem('billed_users');if(u)return JSON.parse(u);}catch(e){}
+  return DEFAULT_USERS;
 }
-function saveUsers(users){
-  try{localStorage.setItem('billed_users',JSON.stringify(users));}catch(e){}
-  dbSet('billed_users',JSON.parse(JSON.stringify(users))).catch(()=>{});
+function saveUsers(u){
+  try{localStorage.setItem('billed_users',JSON.stringify(u));}catch(e){}
 }
 function getSession(){try{return localStorage.getItem('billed_session');}catch(e){return null;}}
 function setSession(u){try{localStorage.setItem('billed_session',u);}catch(e){}}
 function clearSession(){try{localStorage.removeItem('billed_session');}catch(e){}}
 
 function doLogin(){
-  const user=document.getElementById('l-user').value.trim();
-  const pass=document.getElementById('l-pass').value;
-  const err=document.getElementById('login-err');
-  err.style.display='none';
-  if(!user||!pass){err.textContent='Please enter username and password';err.style.display='block';return;}
-  const users=getUsers();
-  const found=users.find(u=>u.username===user&&u.password===pass);
+  var user=(document.getElementById('l-user').value||'').trim();
+  var pass=document.getElementById('l-pass').value||'';
+  var err=document.getElementById('login-err');
+  if(err)err.style.display='none';
+  if(!user||!pass){
+    if(err){err.textContent='Please enter username and password';err.style.display='block';}
+    return;
+  }
+  var users=getUsers();
+  var found=null;
+  for(var i=0;i<users.length;i++){
+    if(users[i].username===user&&users[i].password===pass){found=users[i];break;}
+  }
   if(!found){
-    err.textContent='Invalid username or password';err.style.display='block';
-    document.getElementById('l-pass').value='';return;
+    if(err){err.textContent='Invalid username or password';err.style.display='block';}
+    var lp=document.getElementById('l-pass');if(lp)lp.value='';
+    return;
   }
   setSession(user);
-  const ls=document.getElementById('login-screen');
-  if(ls){ls.style.display='none';}
+  var ls=document.getElementById('login-screen');
+  if(ls)ls.style.display='none';
   refreshUI();
-  // Background cloud sync after login
   if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey){
     setCloudStatus('syncing');
-    cloudLoad().then(d=>{
+    cloudLoad().then(function(d){
       if(d&&typeof d==='object'){
         Object.assign(D,d);if(!D.trash)D.trash=[];
         loadCloudCfgFromSettings();
-        cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
+        cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(function(){});
         try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
         setCloudStatus('ok');_lastSyncAt=Date.now();updateSyncTime();
         refreshUI();
       }
-    }).catch(()=>setCloudStatus('error'));
+    }).catch(function(){setCloudStatus('error');});
   }
 }
 
 function doLogout(){
   if(!confirm('Sign out of BILLED?'))return;
   clearSession();
-  document.getElementById('l-user').value='';
-  document.getElementById('l-pass').value='';
-  document.getElementById('login-err').style.display='none';
-  const ls=document.getElementById('login-screen');
-  ls.style.opacity='0';
-  ls.style.display='flex';
-  ls.style.transition='opacity 0.3s ease';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ls.style.opacity='1';}));
+  var lu=document.getElementById('l-user');if(lu)lu.value='';
+  var lp=document.getElementById('l-pass');if(lp)lp.value='';
+  var le=document.getElementById('login-err');if(le)le.style.display='none';
+  var ls=document.getElementById('login-screen');
+  if(ls){ls.style.opacity='1';ls.style.display='flex';}
 }
 
 function changeCredentials(){
-  const currentPass=document.getElementById('cr-current').value;
-  const newUser=document.getElementById('cr-user').value.trim();
-  const newPass=document.getElementById('cr-pass').value;
-  const confirm=document.getElementById('cr-confirm').value;
-  const err=document.getElementById('cr-err');
-  const ok=document.getElementById('cr-ok');
-  err.style.display='none'; ok.style.display='none';
-
-  const session=getSession();
-  const users=getUsers();
-  const idx=users.findIndex(u=>u.username===session);
-  if(idx===-1){err.textContent='Session error. Please log in again.';err.style.display='block';return;}
-
-  if(!currentPass){err.textContent='Current password is required.';err.style.display='block';return;}
-  if(users[idx].password!==currentPass){err.textContent='Current password is incorrect.';err.style.display='block';return;}
-
-  if(!newUser&&!newPass){err.textContent='Enter a new username or password to update.';err.style.display='block';return;}
-  if(newUser&&newUser.length<3){err.textContent='Username must be at least 3 characters.';err.style.display='block';return;}
-  if(newPass&&newPass.length<6){err.textContent='New password must be at least 6 characters.';err.style.display='block';return;}
-  if(newPass&&newPass!==confirm){err.textContent='New passwords do not match.';err.style.display='block';return;}
-  if(newUser&&users.some((u,i)=>u.username===newUser&&i!==idx)){err.textContent='Username already taken.';err.style.display='block';return;}
-
-  if(newUser) users[idx].username=newUser;
-  if(newPass) users[idx].password=newPass;
+  var currentPass=document.getElementById('cr-current').value;
+  var newUser=(document.getElementById('cr-user').value||'').trim();
+  var newPass=document.getElementById('cr-pass').value;
+  var confirmPass=document.getElementById('cr-confirm').value;
+  var err=document.getElementById('cr-err');
+  var ok=document.getElementById('cr-ok');
+  if(err)err.style.display='none';
+  if(ok)ok.style.display='none';
+  var session=getSession();
+  var users=getUsers();
+  var idx=-1;
+  for(var i=0;i<users.length;i++){if(users[i].username===session){idx=i;break;}}
+  if(idx===-1){if(err){err.textContent='Session error.';err.style.display='block';}return;}
+  if(!currentPass){if(err){err.textContent='Current password required.';err.style.display='block';}return;}
+  if(users[idx].password!==currentPass){if(err){err.textContent='Current password incorrect.';err.style.display='block';}return;}
+  if(!newUser&&!newPass){if(err){err.textContent='Enter a new username or password.';err.style.display='block';}return;}
+  if(newPass&&newPass.length<6){if(err){err.textContent='Password must be at least 6 chars.';err.style.display='block';}return;}
+  if(newPass&&newPass!==confirmPass){if(err){err.textContent='Passwords do not match.';err.style.display='block';}return;}
+  if(newUser)users[idx].username=newUser;
+  if(newPass)users[idx].password=newPass;
   saveUsers(users);
-  if(newUser) setSession(newUser);
-
-  ok.style.display='block';
-  document.getElementById('cr-current').value='';
-  document.getElementById('cr-user').value='';
-  document.getElementById('cr-pass').value='';
-  document.getElementById('cr-confirm').value='';
-  setTimeout(()=>ok.style.display='none',3000);
-}
-
-// ===== RECYCLE BIN =====
-let currentTrashTab='invoices';
-
-function updateTrashBadge(){
-  const n=D.trash.length;
-  const badge=document.getElementById('trash-badge');
-  if(badge){badge.textContent=n;badge.style.display=n?'inline':'none';}
-}
-
-function switchTrashTab(tab,el){
-  currentTrashTab=tab;
-  document.querySelectorAll('#pg-trash .tab').forEach(t=>t.classList.remove('active'));
-  if(el)el.classList.add('active');
-  renderTrash();
-}
-
-function daysAgo(ts){
-  const d=Math.floor((Date.now()-ts)/86400000);
-  return d===0?'Today':d===1?'Yesterday':d+' days ago';
-}
-
-function renderTrash(){
-  if(!D.trash)D.trash=[];
-  // Auto-purge items older than 30 days
-  const before=D.trash.length;
-  D.trash=D.trash.filter(t=>Date.now()-t.deletedAt<30*86400000);
-  if(D.trash.length!==before)save();
-
-  const items=D.trash.filter(t=>t.type===currentTrashTab.slice(0,-1)||(currentTrashTab==='boqs'&&t.type==='boq'));
-  const emptyBtn=document.getElementById('empty-trash-btn');
-  if(emptyBtn)emptyBtn.style.display=D.trash.length?'inline-flex':'none';
-
-  const thead=document.getElementById('trash-thead');
-  const tbody=document.getElementById('trash-tbody');
-
-  const headers={
-    invoices:'<tr><th>Invoice #</th><th>Client</th><th>Subject</th><th>Date</th><th>Total</th><th>Status</th><th>Deleted</th><th>Actions</th></tr>',
-    boqs:'<tr><th>BOQ #</th><th>Title</th><th>Client</th><th>Project</th><th>Date</th><th>Total</th><th>Deleted</th><th>Actions</th></tr>',
-    clients:'<tr><th>Name</th><th>Company</th><th>GSTN</th><th>Email</th><th>Phone</th><th>Deleted</th><th>Actions</th></tr>',
-    projects:'<tr><th>Project</th><th>Client</th><th>Type</th><th>Value</th><th>Status</th><th>Deleted</th><th>Actions</th></tr>',
-  };
-  thead.innerHTML=headers[currentTrashTab]||'';
-
-  if(!items.length){
-    tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🗑️</div><div class="empty-title">Recycle bin is empty</div><div class="empty-sub">Deleted ${currentTrashTab} will appear here</div></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML=items.map((t,i)=>{
-    const trashIdx=D.trash.indexOf(t);
-    const del=daysAgo(t.deletedAt);
-    const actions=`<td style="display:flex;gap:4px;">
-      <button class="btn btn-success btn-sm" onclick="restoreItem(${trashIdx})">↩ Restore</button>
-      <button class="btn btn-danger btn-sm" onclick="permDelete(${trashIdx})">✕ Delete</button>
-    </td>`;
-
-    if(currentTrashTab==='invoices'){
-      const x=t.item;
-      return`<tr>
-        <td class="mono">${x.number||'—'}</td>
-        <td>${x.clientName||'—'}</td>
-        <td>${x.subject||'—'}</td>
-        <td class="mono">${x.date||'—'}</td>
-        <td class="mono" style="color:var(--cyan)">${fmt(x.grand||0)}</td>
-        <td><span class="badge badge-${x.status||'draft'}">${x.status||'draft'}</span></td>
-        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
-        ${actions}
-      </tr>`;
-    }
-    if(currentTrashTab==='boqs'){
-      const x=t.item;
-      return`<tr>
-        <td class="mono">${x.number||'—'}</td>
-        <td>${x.title||'—'}</td>
-        <td>${x.clientName||'—'}</td>
-        <td>${x.project||'—'}</td>
-        <td class="mono">${x.date||'—'}</td>
-        <td class="mono" style="color:var(--cyan)">${fmt(x.grand||0)}</td>
-        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
-        ${actions}
-      </tr>`;
-    }
-    if(currentTrashTab==='clients'){
-      const x=t.item;
-      return`<tr>
-        <td>${x.name||'—'}</td>
-        <td>${x.company||'—'}</td>
-        <td class="mono">${x.gstn||'—'}</td>
-        <td>${x.email||'—'}</td>
-        <td class="mono">${x.phone||'—'}</td>
-        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
-        ${actions}
-      </tr>`;
-    }
-    if(currentTrashTab==='projects'){
-      const x=t.item;
-      return`<tr>
-        <td style="font-weight:600">${x.name||'—'}</td>
-        <td>${x.clientName||'—'}</td>
-        <td>${x.type||'—'}</td>
-        <td class="mono">${x.val?fmt(x.val):'—'}</td>
-        <td><span class="badge badge-${x.status==='active'?'paid':x.status==='completed'?'draft':'pending'}">${x.status||'—'}</span></td>
-        <td class="mono" style="color:var(--amber);font-size:11px">${del}</td>
-        ${actions}
-      </tr>`;
-    }
-    return'';
-  }).join('');
-}
-
-function restoreItem(trashIdx){
-  const t=D.trash[trashIdx];
-  if(!t)return;
-  if(t.type==='invoice')D.invoices.push(t.item);
-  else if(t.type==='boq')D.boqs.push(t.item);
-  else if(t.type==='client')D.clients.push(t.item);
-  else if(t.type==='project')D.projects.push(t.item);
-  D.trash.splice(trashIdx,1);
-  save();renderTrash();updateTrashBadge();
-}
-
-function permDelete(trashIdx){
-  if(!confirm('Permanently delete this item? This cannot be undone.'))return;
-  D.trash.splice(trashIdx,1);
-  save();renderTrash();updateTrashBadge();
-}
-
-function emptyTrash(){
-  if(!confirm('Permanently delete ALL items in the Recycle Bin? This cannot be undone.'))return;
-  D.trash=[];
-  save();renderTrash();updateTrashBadge();
-}
-
-// ===== SUPABASE CONFIG UI =====
-function loadCloudConfigUI(){
-  loadCloudCfgFromSettings();
-  const el1=document.getElementById('cloud-dburl');if(el1)el1.value=CLOUD_CFG.dbUrl||'';
-  const el2=document.getElementById('cloud-apikey-sb');if(el2)el2.value=CLOUD_CFG.apiKey||'';
-  const el3=document.getElementById('cloud-userid-sb');if(el3)el3.value=CLOUD_CFG.userId||'billed_default';
-  // Show baked-in defaults banner if credentials are hardcoded in the file
-  const banner=document.getElementById('cloud-defaults-info');
-  if(banner)banner.style.display=(SUPABASE_DEFAULTS.url&&SUPABASE_DEFAULTS.key)?'block':'none';
-  updateCloudStatusDot2();
-}
-function updateCloudStatusDot2(){
-  const d2=document.getElementById('cloud-status-dot2');
-  const l2=document.getElementById('cloud-status-lbl2');
-  if(!d2)return;
-  const colors={ok:'var(--green)',error:'var(--red)',syncing:'var(--amber)',unconfigured:'var(--text3)'};
-  const glows={ok:'0 0 6px var(--green)',syncing:'0 0 6px var(--amber)',error:'none',unconfigured:'none'};
-  d2.style.background=colors[_cloudStatus]||'var(--text3)';
-  d2.style.boxShadow=glows[_cloudStatus]||'none';
-  if(l2){
-    const labels={ok:'Connected to Supabase',error:'Connection error — check credentials',syncing:'Syncing...',unconfigured:'Not configured'};
-    const syncInfo=_lastSyncAt?` · Last sync: ${new Date(_lastSyncAt).toLocaleTimeString()}`:'';
-    l2.textContent=(labels[_cloudStatus]||_cloudStatus)+(_cloudStatus==='ok'?syncInfo:'');
-  }
-}
-function saveCloudConfig(){
-  CLOUD_CFG.dbUrl=(document.getElementById('cloud-dburl').value||'').trim().replace(/\/$/,'');
-  CLOUD_CFG.apiKey=(document.getElementById('cloud-apikey-sb').value||'').trim();
-  CLOUD_CFG.userId=(document.getElementById('cloud-userid-sb').value||'').trim()||'billed_default';
-  CLOUD_CFG.provider='supabase';
-  saveCloudCfg();  // writes to localStorage AND D.settings
-  // Save D (with embedded config) to local caches immediately
-  cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
-  try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
-  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){showCloudMsg('error','Please enter both Project URL and API Key.');return;}
-  testCloudConnection();
-}
-async function testCloudConnection(){
-  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){showCloudMsg('error','Not configured — enter URL and API key first.');return;}
-  showCloudMsg('syncing','⏳ Connecting to Supabase...');setCloudStatus('syncing');updateCloudStatusDot2();
-  try{
-    const d=await cloudLoad();
-    if(d===null){
-      await cloudSave(JSON.parse(JSON.stringify(D)));
-      _lastSyncAt=Date.now();updateSyncTime();
-      showCloudMsg('ok','✓ Connected! No existing cloud data — your data has been uploaded.');
-    } else {
-      const inv=(d.invoices||[]).length,cli=(d.clients||[]).length,boq=(d.boqs||[]).length;
-      _lastSyncAt=Date.now();updateSyncTime();
-      showCloudMsg('ok',`✓ Connected! Cloud has ${inv} invoice${inv!==1?'s':''}, ${boq} BOQ${boq!==1?'s':''}, ${cli} client${cli!==1?'s':''}.`);
-    }
-    setCloudStatus('ok');updateCloudStatusDot2();
-  }catch(err){setCloudStatus('error');updateCloudStatusDot2();showCloudMsg('error','✗ '+err.message);}
-}
-async function syncNow(){
-  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){showCloudMsg('error','Not configured.');return;}
-  showCloudMsg('syncing','⏳ Syncing...');
-  await pushToCloud();
-  if(_cloudStatus==='ok'){showCloudMsg('ok','✓ Synced to Supabase successfully.');}
-  else{showCloudMsg('error','Sync failed — check credentials.');}
-  updateCloudStatusDot2();
-}
-function clearCloudConfig(){
-  if(!confirm('Disconnect Supabase? Data will be kept in offline cache.'))return;
-  CLOUD_CFG={provider:'supabase',dbUrl:'',apiKey:'',userId:'billed_default'};
-  delete D.settings.supabaseUrl;delete D.settings.supabaseKey;delete D.settings.supabaseUser;
-  saveCloudCfg();
-  try{localStorage.removeItem('billed_cloud_cfg');}catch(e){}
-  cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
-  try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
-  loadCloudConfigUI();setCloudStatus('unconfigured');
-  showCloudMsg('ok','Disconnected. Using offline cache only.');
-}
-function bakeAndDownload(){
-  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){
-    showCloudMsg('error','Please save and connect Supabase credentials first.');return;
-  }
-  if(!confirm('Download a copy of this app with your Supabase credentials pre-configured?\n\nAnyone with this file will be able to access your data. Keep it private.'))return;
-
-  let html=document.documentElement.outerHTML;
-  const marker="url:  '',   // e.g. 'https://abcxyz.supabase.co'";
-  if(!html.includes(marker)){
-    showCloudMsg('error','Could not locate credentials placeholder. Try refreshing the page first.');return;
-  }
-  const userId=CLOUD_CFG.userId||'billed_default';
-  const oldBlock="const SUPABASE_DEFAULTS = {\n  url:  '',   // e.g. 'https://abcxyz.supabase.co'\n  key:  '',   // e.g. 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'\n  user: 'billed_default'\n};";
-  const newBlock="const SUPABASE_DEFAULTS = {\n  url:  '"+CLOUD_CFG.dbUrl+"',\n  key:  '"+CLOUD_CFG.apiKey+"',\n  user: '"+userId+"'\n};";
-  html=html.replace(oldBlock,newBlock);
-  const blob=new Blob([html],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='billed-configured.html';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
-  showCloudMsg('ok','Downloaded! Open this file on any device — Supabase connects automatically.');
-}
-function showSQLSetup(){
-  const m=document.getElementById('sql-modal');
-  if(m)m.style.display=m.style.display==='none'?'block':'none';
-}
-function copySQLSetup(){
-  const txt=document.getElementById('sql-content').textContent;
-  navigator.clipboard.writeText(txt).then(()=>showCloudMsg('ok','✓ SQL copied to clipboard!')).catch(()=>showCloudMsg('error','Copy failed.'));
-}
-function showCloudMsg(type,text){
-  const el=document.getElementById('cloud-cfg-msg');if(!el)return;
-  el.style.display='block';
-  const styles={
-    ok:{bg:'rgba(0,255,179,0.08)',border:'1px solid rgba(0,255,179,0.2)',color:'var(--green)'},
-    error:{bg:'rgba(255,77,109,0.1)',border:'1px solid rgba(255,77,109,0.2)',color:'var(--red)'},
-    syncing:{bg:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.2)',color:'var(--amber)'},
-  };
-  const s=styles[type]||styles.ok;
-  el.style.background=s.bg;el.style.border=s.border;el.style.color=s.color;
-  el.textContent=text;
-  if(type==='ok')setTimeout(()=>{if(el.textContent===text)el.style.display='none';},6000);
-}
-// ===== BACKUP & RESTORE =====
-function backupData(){
-  const payload={
-    version:1,
-    exportedAt:new Date().toISOString(),
-    exportedBy:getSession()||'admin',
-    data:D,
-    users:getUsers(),
-  };
-  const json=JSON.stringify(payload,null,2);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  const date=new Date().toISOString().split('T')[0];
-  a.href=url;
-  a.download=`billed-backup-${date}.json`;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
-}
-
-function backupStats(){
-  const el=document.getElementById('backup-stats');
-  const btn=document.getElementById('backup-stats-btn');
-  if(el.style.display==='block'){el.style.display='none';btn.textContent='View Stats';return;}
-  const dbInfo=CLOUD_CFG.provider?`Cloud (${CLOUD_CFG.provider})`:'IndexedDB (offline)';
-  const lines=[
-    `Database &nbsp;&nbsp;&nbsp;: ${dbInfo}`,
-    `Invoices &nbsp;&nbsp;&nbsp;: ${D.invoices.length}`,
-    `BOQs &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${D.boqs.length}`,
-    `Clients &nbsp;&nbsp;&nbsp;: ${D.clients.length}`,
-    `Projects &nbsp;&nbsp;: ${D.projects.length}`,
-    `Trash &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(D.trash||[]).length} items`,
-    `Data size &nbsp;: ${Math.round(JSON.stringify(D).length/1024)} KB`,
-  ];
-  el.innerHTML=lines.join('<br/>');
-  el.style.display='block';
-  btn.textContent='Hide Stats';
-}
-
-function restoreData(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const payload=JSON.parse(e.target.result);
-      if(!payload.data||!payload.version){
-        showRestoreMsg('error','Invalid backup file. Please use a BILLED backup.');
-        return;
-      }
-      const exportDate=payload.exportedAt?new Date(payload.exportedAt).toLocaleString():'unknown date';
-      if(!confirm(`Merge backup from ${exportDate} into current data?\n\nExisting records will be kept. Only new records from the backup will be added (duplicates skipped).`)){
-        input.value='';return;
-      }
-
-      const d=payload.data;
-
-      // Helper: merge array by unique key, skip duplicates
-      function mergeById(current, incoming, keyFn){
-        const existing=new Set(current.map(keyFn));
-        const added=[];
-        (incoming||[]).forEach(item=>{
-          const k=keyFn(item);
-          if(!existing.has(k)){current.push(item);existing.add(k);added.push(item);}
-        });
-        return added.length;
-      }
-
-      // Merge each collection — use natural unique keys
-      const addedInv  = mergeById(D.invoices,  d.invoices,  x=>x.number);
-      const addedBOQ  = mergeById(D.boqs,      d.boqs,      x=>x.number);
-      const addedCli  = mergeById(D.clients,   d.clients,   x=>String(x.id||x.name));
-      const addedProj = mergeById(D.projects,  d.projects,  x=>String(x.id||x.name));
-
-      // Merge trash — deduplicate by deletedAt + type + item id/number
-      function trashKey(t){return `${t.type}|${t.deletedAt}|${t.item&&(t.item.number||t.item.id||t.item.name)}`;}
-      const addedTrash= mergeById(D.trash,     d.trash||[], trashKey);
-
-      // Merge settings: only fill in blank fields from backup (don't overwrite current)
-      if(d.settings){
-        Object.keys(d.settings).forEach(k=>{
-          if(!D.settings[k]&&d.settings[k])D.settings[k]=d.settings[k];
-        });
-      }
-
-      // Keep counters at max of current vs backup
-      D.ic=Math.max(D.ic||1,d.ic||1);
-      D.bc=Math.max(D.bc||1,d.bc||1);
-      D.cc=Math.max(D.cc||1,d.cc||1);
-      D.pc=Math.max(D.pc||1,d.pc||1);
-
-      // Merge users: add users from backup that don't exist yet
-      if(payload.users&&Array.isArray(payload.users)){
-        const users=getUsers();
-        const existingUsernames=new Set(users.map(u=>u.username));
-        payload.users.forEach(u=>{if(!existingUsernames.has(u.username))users.push(u);});
-        saveUsers(users);
-      }
-
-      save();
-
-      // Refresh UI
-      document.getElementById('sb-name').textContent=D.settings.name||'Your Company';
-      document.getElementById('sb-gstn').textContent='GSTN · '+(D.settings.gstn||'Not configured');
-      updateTrashBadge();
-      loadSettings();
-      input.value='';
-
-      const summary=[
-        addedInv   ?`${addedInv} invoice${addedInv!==1?'s':''}`:'',
-        addedBOQ   ?`${addedBOQ} BOQ${addedBOQ!==1?'s':''}`:'',
-        addedCli   ?`${addedCli} client${addedCli!==1?'s':''}`:'',
-        addedProj  ?`${addedProj} project${addedProj!==1?'s':''}`:'',
-        addedTrash ?`${addedTrash} trash item${addedTrash!==1?'s':''}`:'',
-      ].filter(Boolean);
-      const msg=summary.length?`✓ Merged: ${summary.join(', ')} added.`:'✓ No new records found — everything was already up to date.';
-      showRestoreMsg('ok', msg);
-    }catch(err){
-      showRestoreMsg('error','Failed to parse backup file: '+err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-function showRestoreMsg(type,text){
-  const el=document.getElementById('restore-msg');
-  el.style.display='block';
-  if(type==='ok'){
-    el.style.background='rgba(0,255,179,0.08)';
-    el.style.border='1px solid rgba(0,255,179,0.2)';
-    el.style.color='var(--green)';
-  } else {
-    el.style.background='rgba(255,77,109,0.1)';
-    el.style.border='1px solid rgba(255,77,109,0.2)';
-    el.style.color='var(--red)';
-  }
-  el.textContent=text;
-  if(type==='ok')setTimeout(()=>el.style.display='none',5000);
+  if(newUser)setSession(newUser);
+  if(ok){ok.style.display='block';setTimeout(function(){if(ok)ok.style.display='none';},3000);}
+  var c=document.getElementById('cr-current');if(c)c.value='';
+  var u=document.getElementById('cr-user');if(u)u.value='';
+  var p=document.getElementById('cr-pass');if(p)p.value='';
+  var cf=document.getElementById('cr-confirm');if(cf)cf.value='';
 }
 
 // ===== INIT =====
 function refreshUI(){
   try{document.getElementById('sb-name').textContent=D.settings.name||'Your Company';}catch(e){}
-  try{document.getElementById('sb-gstn').textContent='GSTN · '+(D.settings.gstn||'Not configured');}catch(e){}
+  try{document.getElementById('sb-gstn').textContent='GSTN - '+(D.settings.gstn||'Not configured');}catch(e){}
   if(!D.trash)D.trash=[];
   try{updateTrashBadge();}catch(e){}
   try{renderDash();}catch(e){}
 }
 
-(async function init(){
-  // RULE: .main is ALWAYS visible. Never set opacity:0 on it.
-  const mainEl=document.querySelector('.main');
-  if(mainEl){mainEl.style.opacity='1';mainEl.style.transition='none';}
+(function startApp(){
+  // Make app always visible
+  var mainEl=document.querySelector('.main');
+  if(mainEl)mainEl.style.opacity='1';
 
-  const ls=document.getElementById('login-screen');
-  const hasSession=!!getSession();
+  var ls=document.getElementById('login-screen');
+  var hasSession=!!getSession();
 
-  // Bootstrap cloud credentials from localStorage (sync, zero wait)
+  // Load cloud config from localStorage
+  try{var cc=localStorage.getItem('billed_cloud_cfg');if(cc)Object.assign(CLOUD_CFG,JSON.parse(cc));}catch(e){}
   try{
-    const cc=localStorage.getItem('billed_cloud_cfg');
-    if(cc)Object.assign(CLOUD_CFG,JSON.parse(cc));
-  }catch(e){}
-  try{
-    const raw=localStorage.getItem('billed_it');
-    if(raw){const p=JSON.parse(raw);const s=p&&p.settings||{};
-      if(!CLOUD_CFG.dbUrl&&s.supabaseUrl)CLOUD_CFG.dbUrl=s.supabaseUrl;
-      if(!CLOUD_CFG.apiKey&&s.supabaseKey)CLOUD_CFG.apiKey=s.supabaseKey;
-      if(!CLOUD_CFG.userId&&s.supabaseUser)CLOUD_CFG.userId=s.supabaseUser;
+    var raw=localStorage.getItem('billed_it');
+    if(raw){var p=JSON.parse(raw);var ss=p&&p.settings||{};
+      if(!CLOUD_CFG.dbUrl&&ss.supabaseUrl)CLOUD_CFG.dbUrl=ss.supabaseUrl;
+      if(!CLOUD_CFG.apiKey&&ss.supabaseKey)CLOUD_CFG.apiKey=ss.supabaseKey;
     }
   }catch(e){}
   loadCloudCfgFromSettings();
+
+  // Load local cache
+  try{var raw2=localStorage.getItem('billed_it');if(raw2){Object.assign(D,JSON.parse(raw2));if(!D.trash)D.trash=[];}}catch(e){}
 
   if(!hasSession){
-    // Show login immediately — nothing else needed
     if(ls){ls.style.display='flex';ls.style.opacity='1';}
-    // Preload local cache in background so data is ready after login
-    try{const raw=localStorage.getItem('billed_it');if(raw){Object.assign(D,JSON.parse(raw));if(!D.trash)D.trash=[];}}catch(e){}
-    try{const d=await cacheGet('billed_it');if(d&&typeof d==='object'){Object.assign(D,d);if(!D.trash)D.trash=[];}}catch(e){}
     return;
   }
-
-  // Has session — hide login, show app
   if(ls)ls.style.display='none';
-
-  // Load from local cache (instant)
-  try{const raw=localStorage.getItem('billed_it');if(raw){Object.assign(D,JSON.parse(raw));if(!D.trash)D.trash=[];}}catch(e){}
-  try{const d=await cacheGet('billed_it');if(d&&typeof d==='object'){Object.assign(D,d);if(!D.trash)D.trash=[];}}catch(e){}
-  loadCloudCfgFromSettings();
   refreshUI();
-  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){setCloudStatus('unconfigured');return;}
 
-  // Sync from Supabase in background (non-blocking)
-  setCloudStatus('syncing');
-  try{
-    const cloudData=await Promise.race([
-      cloudLoad(),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
-    ]);
-    if(cloudData&&typeof cloudData==='object'){
-      Object.assign(D,cloudData);if(!D.trash)D.trash=[];
-      loadCloudCfgFromSettings();
-      cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(()=>{});
-      try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
-      setCloudStatus('ok');_lastSyncAt=Date.now();updateSyncTime();
-      refreshUI();
-    }
-  }catch(err){
-    console.warn('Cloud sync failed:',err.message);
-    setCloudStatus('error');
-  }
+  // Background cloud sync
+  if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey){
+    setCloudStatus('syncing');
+    var t=setTimeout(function(){setCloudStatus('error');},8000);
+    cloudLoad().then(function(cloudData){
+      clearTimeout(t);
+      if(cloudData&&typeof cloudData==='object'){
+        Object.assign(D,cloudData);if(!D.trash)D.trash=[];
+        loadCloudCfgFromSettings();
+        cacheSet('billed_it',JSON.parse(JSON.stringify(D))).catch(function(){});
+        try{localStorage.setItem('billed_it',JSON.stringify(D));}catch(e){}
+        setCloudStatus('ok');_lastSyncAt=Date.now();updateSyncTime();
+        refreshUI();
+      } else {setCloudStatus('unconfigured');}
+    }).catch(function(err){
+      clearTimeout(t);
+      console.warn('Cloud sync failed:',err.message);
+      setCloudStatus('error');
+    });
+  } else {setCloudStatus('unconfigured');}
 })();
 </script>
 </body>
