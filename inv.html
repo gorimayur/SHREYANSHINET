@@ -533,13 +533,19 @@ select option{background:var(--surface2);}
 
       <div class="settings-card" style="margin-top:24px;">
         <div class="settings-card-title">Supabase Cloud Database</div>
+
+        <!-- Baked-in defaults indicator -->
+        <div id="cloud-defaults-info" style="display:none;background:rgba(0,255,179,0.06);border:1px solid rgba(0,255,179,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;font-family:var(--font-mono);color:var(--green);">
+          ✓ Credentials are baked into this file — auto-connects on every device automatically.
+        </div>
+
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:14px 16px;margin-bottom:18px;">
           <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:8px;font-family:var(--font-mono);letter-spacing:0.06em;">SETUP GUIDE</div>
           <ol style="font-size:12px;color:var(--text3);line-height:2;padding-left:18px;">
             <li>Go to <a href="https://supabase.com" target="_blank" style="color:var(--cyan)">supabase.com</a> → Create free account → New project</li>
             <li>In <b style="color:var(--text)">SQL Editor</b>, run the SQL from the <b style="color:var(--text)">SQL Setup</b> button below</li>
             <li>Go to <b style="color:var(--text)">Project Settings → API</b> → copy <b style="color:var(--text)">Project URL</b> and <b style="color:var(--text)">anon public</b> key</li>
-            <li>Paste below and click <b style="color:var(--cyan)">Save &amp; Connect</b></li>
+            <li>Paste below, click <b style="color:var(--cyan)">Save &amp; Connect</b>, then re-save the HTML file with credentials embedded</li>
           </ol>
         </div>
 
@@ -563,8 +569,10 @@ select option{background:var(--surface2);}
           <button class="btn btn-ghost" onclick="testCloudConnection()">⚡ Test Connection</button>
           <button class="btn btn-ghost" onclick="showSQLSetup()">📋 SQL Setup</button>
           <button class="btn btn-success btn-sm" onclick="syncNow()">↑↓ Sync Now</button>
+          <button class="btn btn-purple btn-sm" onclick="bakeAndDownload()">⬇ Bake &amp; Download</button>
           <button class="btn btn-danger btn-sm" onclick="clearCloudConfig()">Disconnect</button>
         </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-family:var(--font-mono);">💡 <b style="color:var(--text)">Bake &amp; Download</b> — embeds your credentials into the HTML file so any device auto-connects without setup.</div>
 
         <div id="cloud-cfg-msg" style="margin-bottom:10px;display:none;border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);"></div>
 
@@ -852,25 +860,37 @@ function cacheGet(key){return openDB().then(db=>new Promise((resolve,reject)=>{c
 function cacheSet(key,val){return openDB().then(db=>new Promise((resolve,reject)=>{const req=db.transaction(DB_STORE,'readwrite').objectStore(DB_STORE).put(val,key);req.onsuccess=()=>resolve();req.onerror=e=>reject(e.target.error);}));}
 
 // ── Supabase cloud layer ──────────────────────────────────
-// CLOUD_CFG reads from D.settings (synced) AND localStorage (fallback)
-// This means once configured on device 1 and synced, device 2 auto-connects on load
+// === PASTE YOUR SUPABASE CREDENTIALS HERE (one-time setup) ===
+// === PASTE YOUR SUPABASE CREDENTIALS HERE (one-time setup) ===
+// === After pasting, save the file - all devices auto-connect ===
+const SUPABASE_DEFAULTS = {
+  url:  '',   // e.g. 'https://abcxyz.supabase.co'
+  key:  '',   // e.g. 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  user: 'billed_default'
+};
+
+// CLOUD_CFG: priority order = SUPABASE_DEFAULTS > D.settings > localStorage
 let CLOUD_CFG = {provider:'supabase', dbUrl:'', apiKey:'', userId:'billed_default'};
+
 function loadCloudCfgFromSettings(){
-  // Prefer D.settings (comes from Supabase sync), fallback to localStorage
-  if(D.settings.supabaseUrl)CLOUD_CFG.dbUrl=D.settings.supabaseUrl;
-  if(D.settings.supabaseKey)CLOUD_CFG.apiKey=D.settings.supabaseKey;
-  if(D.settings.supabaseUser)CLOUD_CFG.userId=D.settings.supabaseUser;
-  // Also read from localStorage as a bootstrap before D is loaded
+  // 1. Hardcoded defaults win (baked into the file)
+  if(SUPABASE_DEFAULTS.url){CLOUD_CFG.dbUrl=SUPABASE_DEFAULTS.url;}
+  if(SUPABASE_DEFAULTS.key){CLOUD_CFG.apiKey=SUPABASE_DEFAULTS.key;}
+  if(SUPABASE_DEFAULTS.user){CLOUD_CFG.userId=SUPABASE_DEFAULTS.user;}
+  // 2. D.settings (synced from cloud — fills in if defaults are empty)
+  if(!CLOUD_CFG.dbUrl&&D.settings.supabaseUrl)CLOUD_CFG.dbUrl=D.settings.supabaseUrl;
+  if(!CLOUD_CFG.apiKey&&D.settings.supabaseKey)CLOUD_CFG.apiKey=D.settings.supabaseKey;
+  if(!CLOUD_CFG.userId&&D.settings.supabaseUser)CLOUD_CFG.userId=D.settings.supabaseUser;
+  // 3. localStorage fallback (last resort)
   try{const cc=localStorage.getItem('billed_cloud_cfg');if(cc){const p=JSON.parse(cc);
     if(!CLOUD_CFG.dbUrl&&p.dbUrl)CLOUD_CFG.dbUrl=p.dbUrl;
     if(!CLOUD_CFG.apiKey&&p.apiKey)CLOUD_CFG.apiKey=p.apiKey;
     if(!CLOUD_CFG.userId&&p.userId)CLOUD_CFG.userId=p.userId;
   }}catch(e){}
 }
+
 function saveCloudCfg(){
-  // Save to localStorage (this device)
   try{localStorage.setItem('billed_cloud_cfg',JSON.stringify(CLOUD_CFG));}catch(e){}
-  // Save into D.settings so it syncs to Supabase and propagates to all devices
   D.settings.supabaseUrl=CLOUD_CFG.dbUrl;
   D.settings.supabaseKey=CLOUD_CFG.apiKey;
   D.settings.supabaseUser=CLOUD_CFG.userId;
@@ -2085,11 +2105,13 @@ function emptyTrash(){
 
 // ===== SUPABASE CONFIG UI =====
 function loadCloudConfigUI(){
-  // Always refresh CLOUD_CFG from D.settings first
   loadCloudCfgFromSettings();
   const el1=document.getElementById('cloud-dburl');if(el1)el1.value=CLOUD_CFG.dbUrl||'';
   const el2=document.getElementById('cloud-apikey-sb');if(el2)el2.value=CLOUD_CFG.apiKey||'';
   const el3=document.getElementById('cloud-userid-sb');if(el3)el3.value=CLOUD_CFG.userId||'billed_default';
+  // Show baked-in defaults banner if credentials are hardcoded in the file
+  const banner=document.getElementById('cloud-defaults-info');
+  if(banner)banner.style.display=(SUPABASE_DEFAULTS.url&&SUPABASE_DEFAULTS.key)?'block':'none';
   updateCloudStatusDot2();
 }
 function updateCloudStatusDot2(){
@@ -2154,7 +2176,35 @@ function clearCloudConfig(){
   loadCloudConfigUI();setCloudStatus('unconfigured');
   showCloudMsg('ok','Disconnected. Using offline cache only.');
 }
-function showSQLSetup(){
+function bakeAndDownload(){
+  if(!CLOUD_CFG.dbUrl||!CLOUD_CFG.apiKey){
+    showCloudMsg('error','Please save and connect Supabase credentials first.');return;
+  }
+  if(!confirm('Download a copy of this app with your Supabase credentials pre-configured?\n\nAnyone with this file will be able to access your data. Keep it private.'))return;
+
+  let html=document.documentElement.outerHTML;
+  // Replace the SUPABASE_DEFAULTS block with actual credentials
+  const oldDefaults=`const SUPABASE_DEFAULTS = {
+  url:  '',   // e.g. 'https://abcxyz.supabase.co'
+  key:  '',   // e.g. 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  user: 'billed_default'
+};`;
+  const newDefaults=`const SUPABASE_DEFAULTS = {
+  url:  '${CLOUD_CFG.dbUrl}',
+  key:  '${CLOUD_CFG.apiKey}',
+  user: '${CLOUD_CFG.userId||'billed_default'}'
+};`;
+  if(!html.includes("url:  '',")) {
+    showCloudMsg('error','Could not locate credentials placeholder. Try refreshing the page first.');return;
+  }
+  html=html.replace(oldDefaults,newDefaults);
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='billed-configured.html';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  showCloudMsg('ok','✓ Downloaded! Open this file on any device — Supabase connects automatically.');
+}
   const m=document.getElementById('sql-modal');
   if(m)m.style.display=m.style.display==='none'?'block':'none';
 }
@@ -2317,13 +2367,17 @@ function showRestoreMsg(type,text){
 
 // ===== INIT =====
 (async function init(){
-  // Step 1: Show login screen or app IMMEDIATELY — never block on cloud
   const hasSession=!!getSession();
   const ls=document.getElementById('login-screen');
 
-  // Bootstrap cloud config from localStorage (sync, instant)
-  try{const cc=localStorage.getItem('billed_cloud_cfg');if(cc){const p=JSON.parse(cc);Object.assign(CLOUD_CFG,p);}}catch(e){}
-  try{const s=localStorage.getItem('billed_it');if(s){const p=JSON.parse(s);if(p&&p.settings){if(p.settings.supabaseUrl)CLOUD_CFG.dbUrl=p.settings.supabaseUrl;if(p.settings.supabaseKey)CLOUD_CFG.apiKey=p.settings.supabaseKey;if(p.settings.supabaseUser)CLOUD_CFG.userId=p.settings.supabaseUser;}}}catch(e){}
+  // Bootstrap cloud config — hardcoded defaults take priority
+  loadCloudCfgFromSettings();
+  // Also read any saved URL/key from local cache as additional fallback
+  try{const s=localStorage.getItem('billed_it');if(s){const p=JSON.parse(s);if(p&&p.settings){
+    if(!CLOUD_CFG.dbUrl&&p.settings.supabaseUrl)CLOUD_CFG.dbUrl=p.settings.supabaseUrl;
+    if(!CLOUD_CFG.apiKey&&p.settings.supabaseKey)CLOUD_CFG.apiKey=p.settings.supabaseKey;
+    if(!CLOUD_CFG.userId&&p.settings.supabaseUser)CLOUD_CFG.userId=p.settings.supabaseUser;
+  }}}catch(e){}
 
   if(!hasSession){
     // Show login page right away — no waiting
