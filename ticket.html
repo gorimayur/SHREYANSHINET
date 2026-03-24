@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta name="description" content="ServiceDesk Pro — IT Ticket Management Platform">
+    <title>ServiceDesk Pro — IT Ticket Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-0: #070b14;
+            --bg-1: #0b1120;
+            --bg-2: #101828;
+            --bg-3: #141f33;
+            --border: #1c2d4a;
+            --border-2: #243854;
+            --txt-1: #e2eaf6;
+            --txt-2: #8a9dc0;
+            --txt-3: #4a607e;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59,130,246,0.18);
+            --gold: #f59e0b;
+            --green: #10b981;
+            --orange: #f97316;
+            --red: #ef4444;
+            --sidebar-w: 256px;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Syne',sans-serif;background:var(--bg-0);color:var(--txt-1);min-height:100vh;overflow-x:hidden}
+
+        /* ─── LOGIN ─── */
+        #login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;
+            background:radial-gradient(ellipse 60% 60% at 20% 50%,rgba(59,130,246,.09) 0%,transparent 70%),
+                        radial-gradient(ellipse 50% 50% at 80% 20%,rgba(139,92,246,.06) 0%,transparent 60%),
+                        var(--bg-0);}
+        .grid-bg{position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.3;pointer-events:none;}
+        .login-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:0 20px;}
+        .login-card{background:var(--bg-2);border:1px solid var(--border);border-radius:20px;padding:44px 40px;
+            box-shadow:0 32px 64px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);animation:fadeUp .5s ease both;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+        .brand{display:flex;align-items:center;gap:14px;margin-bottom:36px;}
+        .brand-icon{width:48px;height:48px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:14px;
+            display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+            box-shadow:0 8px 20px rgba(59,130,246,.35);}
+        .brand h1{font-size:20px;font-weight:800;letter-spacing:-.3px;}
+        .brand span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt-3);display:block;margin-top:2px;}
+        .login-h{font-size:26px;font-weight:800;margin-bottom:6px;letter-spacing:-.5px;}
+        .login-sub{color:var(--txt-2);font-size:14px;margin-bottom:32px;}
+        .fl{margin-bottom:18px;}
+        .fl label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;
+            letter-spacing:1px;color:var(--txt-2);margin-bottom:8px;}
+        .fi{width:100%;background:var(--bg-1);border:1px solid var(--border);border-radius:10px;
+            padding:12px 16px;color:var(--txt-1);font-size:15px;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;}
+        .fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+        .fi::placeholder{color:var(--txt-3);}
+        .fi:disabled{opacity:.5;cursor:not-allowed;}
+        .fi[multiple]{background-size:0}
+        select.fi{cursor:pointer;appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%238a9dc0' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;background-position:right 12px center;background-size:20px;padding-right:36px;}
+        textarea.fi{resize:vertical;min-height:100px;}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;
+            font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;border:none;text-decoration:none;white-space:nowrap;}
+        .btn-primary{background:var(--accent);color:#fff;width:100%;justify-content:center;font-size:15px;padding:14px;
+            box-shadow:0 4px 16px rgba(59,130,246,.3);}
+        .btn-primary:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,130,246,.4);}
+        .btn-secondary{background:var(--bg-1);color:var(--txt-1);border:1px solid var(--border);}
+        .btn-secondary:hover{border-color:var(--border-2);background:var(--bg-2);}
+        .btn-ghost{background:none;color:var(--txt-2);border:1px solid transparent;padding:8px 12px;}
+        .btn-ghost:hover{background:var(--bg-1);border-color:var(--border);color:var(--txt-1);}
+        .btn-danger{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);}
+        .btn-danger:hover{background:rgba(239,68,68,.2);}
+        .btn-success{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.25);}
+        .btn-success:hover{background:rgba(16,185,129,.2);}
+        .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+        .btn-xs{padding:4px 10px;font-size:11px;border-radius:6px;}
+        .err-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;
+            padding:10px 14px;border-radius:10px;font-size:13px;margin-top:14px;display:none;}
+        .ssl-line{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:24px;
+            color:var(--txt-3);font-family:'JetBrains Mono',monospace;font-size:11px;}
+        .ssl-dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);}
+
+        /* ─── APP SHELL ─── */
+        #app{display:flex;min-height:100vh;}
+        #sidebar{width:var(--sidebar-w);background:var(--bg-1);border-right:1px solid var(--border);
+            display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:200;}
+        #main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;}
+
+        /* ─── SIDEBAR ─── */
+        .sb-head{padding:20px 16px;border-bottom:1px solid var(--border);}
+        .sb-brand{display:flex;align-items:center;gap:10px;}
+        .sb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:10px;
+            display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+        .sb-brand h2{font-size:15px;font-weight:800;}
+        .sb-brand span{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt-3);}
+        .sb-user{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+        .avatar{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#8b5cf6);border-radius:9px;
+            display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;}
+        .u-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .u-role{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt-3);text-transform:uppercase;}
+        .u-role.admin{color:var(--accent);}
+        .sb-ssl{margin-left:auto;display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;
+            font-size:9px;color:var(--green);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+            padding:3px 7px;border-radius:20px;white-space:nowrap;}
+        .sb-nav{padding:14px 10px;flex:1;}
+        .ns-title{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;
+            color:var(--txt-3);padding:0 8px;margin-bottom:6px;margin-top:6px;}
+        .ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;color:var(--txt-2);
+            cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;margin-bottom:2px;}
+        .ni:hover{background:rgba(59,130,246,.08);color:var(--txt-1);}
+        .ni.active{background:rgba(59,130,246,.14);color:var(--accent);}
+        .ni .nico{font-size:15px;width:18px;text-align:center;}
+        .ni-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:20px;}
+        .sb-foot{padding:10px;border-top:1px solid var(--border);}
+
+        /* ─── PAGE ─── */
+        .ph{padding:24px 30px 18px;border-bottom:1px solid var(--border);background:var(--bg-1);
+            display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+        .ph-t{font-size:22px;font-weight:800;letter-spacing:-.4px;}
+        .ph-s{color:var(--txt-2);font-size:13px;margin-top:3px;}
+        .pb{padding:26px 30px;}
+
+        /* ─── STATS ─── */
+        .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+        .sc{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+        .sc-l{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--txt-3);margin-bottom:8px;}
+        .sc-v{font-size:38px;font-weight:800;line-height:1;}
+        .sc.tot .sc-v{color:var(--accent);}
+        .sc.pen .sc-v{color:var(--gold);}
+        .sc.res .sc-v{color:var(--green);}
+        .sc.rep .sc-v{color:var(--orange);}
+
+        /* ─── FILTERS ─── */
+        .fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+        .fb{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+            border:1px solid var(--border);background:var(--bg-2);color:var(--txt-2);transition:all .15s;font-family:inherit;}
+        .fb:hover{border-color:var(--border-2);color:var(--txt-1);}
+        .fb.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+        /* ─── SEARCH ─── */
+        .sbox{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--border);
+            border-radius:10px;padding:9px 14px;margin-bottom:18px;}
+        .sbox input{background:none;border:none;outline:none;color:var(--txt-1);font-size:14px;font-family:inherit;flex:1;}
+        .sbox input::placeholder{color:var(--txt-3);}
+
+        /* ─── TICKET CARDS ─── */
+        .tlist{display:flex;flex-direction:column;gap:10px;}
+        .tc{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+            cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px;border-left:4px solid transparent;}
+        .tc:hover{border-color:var(--border-2);transform:translateX(3px);background:var(--bg-3);}
+        .tc.pending{border-left-color:var(--gold);}
+        .tc.resolved{border-left-color:var(--green);}
+        .tc.reopened{border-left-color:var(--orange);}
+        .tc-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            font-size:17px;flex-shrink:0;}
+        .tc-info{flex:1;min-width:0;}
+        .tc-title{font-size:14px;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .tc-meta{display:flex;gap:14px;color:var(--txt-3);font-size:11px;font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+
+        /* ─── STATUS BADGE ─── */
+        .sb-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;
+            font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+        .sb-badge.pending{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
+        .sb-badge.resolved{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+        .sb-badge.reopened{background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.3);}
+        .sb-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+        /* ─── CARD ─── */
+        .card{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+        .ch{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .ct{font-size:15px;font-weight:700;}
+        .cb{padding:20px;}
+
+        /* ─── TABLE ─── */
+        .dt{width:100%;border-collapse:collapse;}
+        .dt th{text-align:left;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:9px;
+            text-transform:uppercase;color:var(--txt-3);border-bottom:1px solid var(--border);letter-spacing:.8px;}
+        .dt td{padding:11px 14px;border-bottom:1px solid rgba(28,45,74,.4);font-size:13px;color:var(--txt-2);}
+        .dt tr:last-child td{border-bottom:none;}
+        .dt tr:hover td{background:rgba(59,130,246,.03);color:var(--txt-1);}
+
+        /* ─── TICKET DETAIL ─── */
+        .det-grid{display:grid;grid-template-columns:1fr 320px;gap:22px;}
+        .sts-sel{background:var(--bg-1);border:1px solid var(--border);border-radius:9px;padding:8px 12px;
+            color:var(--txt-1);font-size:13px;font-family:inherit;cursor:pointer;outline:none;font-weight:600;}
+        .sts-sel:focus{border-color:var(--accent);}
+        .tid{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt-3);background:var(--bg-1);
+            padding:3px 8px;border-radius:5px;border:1px solid var(--border);}
+        .info-row{margin-bottom:14px;}
+        .ir-l{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--txt-3);margin-bottom:4px;}
+        .ir-v{font-size:13px;font-weight:600;}
+
+        /* ─── COMMENTS ─── */
+        .cmt-list{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
+        .cmt{display:flex;gap:10px;}
+        .cmt-av{width:30px;height:30px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;
+            display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+        .cmt-bub{background:var(--bg-1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;}
+        .cmt-hd{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+        .cmt-auth{font-size:13px;font-weight:700;}
+        .cmt-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt-3);}
+        .cmt-txt{font-size:13px;color:var(--txt-2);line-height:1.65;}
+        .cmt-img{margin-top:10px;max-width:260px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+        .cmt-img img{width:100%;display:block;}
+        .cmt-form{background:var(--bg-1);border:1px solid var(--border);border-radius:12px;padding:16px;}
+        .cmt-inp{width:100%;background:var(--bg-0);border:1px solid var(--border);border-radius:8px;
+            padding:10px 14px;color:var(--txt-1);font-size:13px;font-family:inherit;resize:vertical;
+            min-height:75px;outline:none;transition:border-color .2s;margin-bottom:10px;}
+        .cmt-inp:focus{border-color:var(--accent);}
+        .cmt-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+        .fi-lbl{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--bg-2);
+            border:1px solid var(--border);border-radius:8px;color:var(--txt-2);font-size:12px;
+            cursor:pointer;transition:all .15s;font-family:inherit;}
+        .fi-lbl:hover{border-color:var(--border-2);color:var(--txt-1);}
+        input[type="file"]{display:none;}
+        .ph-prev{max-width:180px;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+        .ph-prev img{width:100%;display:block;}
+
+        /* ─── MODALS ─── */
+        .moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);
+            z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+        .modal{background:var(--bg-2);border:1px solid var(--border);border-radius:18px;width:100%;
+            max-width:480px;box-shadow:0 32px 64px rgba(0,0,0,.5);animation:mIn .2s ease;}
+        @keyframes mIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+        .mh{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .mt{font-size:17px;font-weight:800;}
+        .mc{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;
+            cursor:pointer;color:var(--txt-3);font-size:18px;background:none;border:none;transition:all .15s;}
+        .mc:hover{background:var(--bg-1);color:var(--txt-1);}
+        .mb{padding:22px 24px;}
+        .mf{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+        /* ─── TOAST ─── */
+        #tst{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+        .toast{background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;
+            font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:tIn .3s ease;
+            min-width:240px;display:flex;align-items:center;gap:9px;}
+        @keyframes tIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+        .toast.success{border-left:3px solid var(--green);}
+        .toast.error{border-left:3px solid var(--red);}
+        .toast.info{border-left:3px solid var(--accent);}
+
+        /* ─── MISC ─── */
+        .view{display:none;}
+        .view.active{display:block;}
+        .empty{text-align:center;padding:56px 20px;color:var(--txt-3);}
+        .empty-ico{font-size:44px;margin-bottom:14px;}
+        .empty h3{font-size:16px;color:var(--txt-2);margin-bottom:6px;}
+        .empty p{font-size:13px;}
+        .loading{display:flex;align-items:center;justify-content:center;padding:56px;color:var(--txt-3);gap:10px;font-size:13px;}
+        .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;}
+        @keyframes sp{to{transform:rotate(360deg)}}
+        .div{height:1px;background:var(--border);margin:18px 0;}
+        .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+        .back{display:inline-flex;align-items:center;gap:6px;color:var(--txt-2);cursor:pointer;font-size:13px;
+            margin-bottom:18px;padding:6px 0;background:none;border:none;font-family:inherit;transition:color .15s;}
+        .back:hover{color:var(--txt-1);}
+        pre.sql-box{background:var(--bg-1);padding:16px;border-radius:10px;font-family:'JetBrains Mono',monospace;
+            font-size:11px;color:#7dd3fc;overflow-x:auto;border:1px solid var(--border);white-space:pre-wrap;line-height:1.6;}
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:var(--bg-0)}
+        ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+
+        @media(max-width:900px){
+            .det-grid{grid-template-columns:1fr;}
+            .two{grid-template-columns:1fr;}
+        }
+        @media(max-width:700px){
+            #sidebar{transform:translateX(-100%);transition:transform .3s;}
+            #sidebar.open{transform:translateX(0);}
+            #main{margin-left:0;}
+            .pb,.ph{padding:16px;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login-page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-icon">🎫</div>
+        <div><h1>ServiceDesk Pro</h1><span>IT TICKET MANAGEMENT PLATFORM</span></div>
+      </div>
+      <h2 class="login-h">Sign in</h2>
+      <p class="login-sub">Enter your credentials to access the dashboard</p>
+      <div class="fl"><label>Email Address</label>
+        <input type="email" id="le" class="fi" placeholder="you@company.com" autocomplete="email"></div>
+      <div class="fl"><label>Password</label>
+        <input type="password" id="lp" class="fi" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-primary" onclick="doLogin()" id="lbtn">Sign In to Dashboard →</button>
+      <div id="lerr" class="err-box"></div>
+      <div class="ssl-line"><div class="ssl-dot"></div>SSL / TLS Encrypted &nbsp;·&nbsp; Secured by Supabase</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sb-head">
+      <div class="sb-brand">
+        <div class="ico">🎫</div>
+        <div><h2>ServiceDesk</h2><span>IT TICKET PLATFORM</span></div>
+      </div>
+    </div>
+    <div class="sb-user">
+      <div class="avatar" id="sa">U</div>
+      <div style="min-width:0;flex:1">
+        <div class="u-name" id="sn">Loading…</div>
+        <div class="u-role" id="sr">user</div>
+      </div>
+      <div class="sb-ssl">🔒 SSL</div>
+    </div>
+    <div class="sb-nav">
+      <div class="ns-title">Tickets</div>
+      <div class="ni active" id="nav-dashboard" onclick="go('dashboard')"><span class="nico">📊</span>Dashboard</div>
+      <div class="ni" id="nav-create-ticket" onclick="go('create-ticket')"><span class="nico">➕</span>Create Ticket</div>
+      <div class="ni" id="nav-ticket-log" onclick="go('ticket-log')"><span class="nico">📋</span>Ticket Log</div>
+      <div id="admin-nav" style="display:none">
+        <div class="ns-title" style="margin-top:14px">Admin</div>
+        <div class="ni" id="nav-admin-users" onclick="go('admin-users')"><span class="nico">👥</span>User Management</div>
+        <div class="ni" id="nav-recycle-bin" onclick="go('recycle-bin')"><span class="nico">🗑️</span>Recycle Bin</div>
+        <div class="ni" id="nav-backup-restore" onclick="go('backup-restore')"><span class="nico">💾</span>Backup &amp; Restore</div>
+      </div>
+    </div>
+    <div class="sb-foot">
+      <div class="ni" onclick="doLogout()"><span class="nico">🚪</span>Sign Out</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="ph">
+        <div><div class="ph-t">Dashboard</div><div class="ph-s">IT Service Ticket Overview</div></div>
+        <button class="btn btn-primary btn-sm" onclick="go('create-ticket')">➕ New Ticket</button>
+      </div>
+      <div class="pb">
+        <div class="stats">
+          <div class="sc tot"><div class="sc-l">Total Tickets</div><div class="sc-v" id="st-tot">—</div></div>
+          <div class="sc pen"><div class="sc-l">🟡 Pending</div><div class="sc-v" id="st-pen">—</div></div>
+          <div class="sc res"><div class="sc-l">🟢 Resolved</div><div class="sc-v" id="st-res">—</div></div>
+          <div class="sc rep"><div class="sc-l">🟠 Reopened</div><div class="sc-v" id="st-rep">—</div></div>
+        </div>
+        <div class="fbar">
+          <button class="fb active" onclick="setF('all',this)">All</button>
+          <button class="fb" onclick="setF('pending',this)">🟡 Pending</button>
+          <button class="fb" onclick="setF('resolved',this)">🟢 Resolved</button>
+          <button class="fb" onclick="setF('reopened',this)">🟠 Reopened</button>
+        </div>
+        <div class="sbox"><span>🔍</span><input id="tsearch" type="text" placeholder="Search tickets…" oninput="renderTickets(this.value)"></div>
+        <div id="tlist"><div class="loading"><div class="spin"></div>Loading tickets…</div></div>
+      </div>
+    </div>
+
+    <!-- CREATE TICKET -->
+    <div id="view-create-ticket" class="view">
+      <div class="ph">
+        <div><div class="ph-t">Create Ticket</div><div class="ph-s">Submit a new IT support request</div></div>
+      </div>
+      <div class="pb">
+        <button class="back" onclick="go('dashboard')">← Back to Dashboard</button>
+        <div class="card" style="max-width:680px">
+          <div class="ch"><span class="ct">New Support Ticket</span><span class="tid">AUTO-ASSIGNED</span></div>
+          <div class="cb">
+            <div class="fl"><label>Ticket Title *</label>
+              <input type="text" id="ttl" class="fi" placeholder="Brief description of the issue"></div>
+            <div class="two">
+              <div class="fl"><label>Created By (auto)</label><input type="text" id="tby" class="fi" disabled></div>
+              <div class="fl"><label>Date &amp; Time (auto)</label><input type="text" id="tdt" class="fi" disabled></div>
+            </div>
+            <div class="two">
+              <div class="fl"><label>Category</label>
+                <select id="tcat" class="fi">
+                  <option value="hardware">Hardware Issue</option>
+                  <option value="software">Software Issue</option>
+                  <option value="network">Network / Connectivity</option>
+                  <option value="access">Access &amp; Permissions</option>
+                  <option value="email">Email &amp; Communication</option>
+                  <option value="security">Security Incident</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="fl"><label>Priority</label>
+                <select id="tpri" class="fi">
+                  <option value="low">🟢 Low</option>
+                  <option value="medium" selected>🟡 Medium</option>
+                  <option value="high">🔴 High</option>
+                  <option value="critical">🚨 Critical</option>
+                </select>
+              </div>
+            </div>
+            <div class="fl"><label>Description *</label>
+              <textarea id="tdesc" class="fi" rows="5" placeholder="Detailed description: steps to reproduce, expected vs actual behavior, affected systems…"></textarea></div>
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button class="btn btn-secondary" onclick="go('dashboard')">Cancel</button>
+              <button class="btn btn-primary" onclick="mkTicket()" id="ctbtn">Submit Ticket →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TICKET LOG -->
+    <div id="view-ticket-log" class="view">
+      <div class="ph">
+        <div><div class="ph-t">Ticket Log</div><div class="ph-s">Complete history of all service tickets</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportLog()">⬇️ Export CSV</button>
+      </div>
+      <div class="pb">
+        <div class="fbar" id="log-fbar">
+          <button class="fb active" onclick="setLF('all',this)">All</button>
+          <button class="fb" onclick="setLF('pending',this)">🟡 Pending</button>
+          <button class="fb" onclick="setLF('resolved',this)">🟢 Resolved</button>
+          <button class="fb" onclick="setLF('reopened',this)">🟠 Reopened</button>
+        </div>
+        <div class="card"><div id="tlog" style="overflow-x:auto"><div class="loading"><div class="spin"></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- TICKET DETAIL -->
+    <div id="view-ticket-detail" class="view">
+      <div class="ph">
+        <div><div class="ph-t" id="dh-t">Ticket Detail</div><div class="ph-s" id="dh-s">…</div></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select class="sts-sel" id="dsts" onchange="updStatus(this.value)">
+            <option value="pending">🟡 Pending</option>
+            <option value="resolved">🟢 Resolved</option>
+            <option value="reopened">🟠 Reopened</option>
+          </select>
+          <button class="btn btn-danger btn-sm" id="del-btn" style="display:none" onclick="delTicket()">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="pb">
+        <button class="back" onclick="go('dashboard')">← Back to Dashboard</button>
+        <div class="det-grid">
+          <div>
+            <div class="card" style="margin-bottom:20px">
+              <div class="ch"><span class="ct">Ticket Details</span><span id="dbadge"></span></div>
+              <div class="cb"><div id="dcont"></div></div>
+            </div>
+            <div class="card">
+              <div class="ch"><span class="ct">💬 Comments</span><span id="ccount" style="font-size:12px;color:var(--txt-3)">0 comments</span></div>
+              <div class="cb">
+                <div id="clist" class="cmt-list"></div>
+                <div class="cmt-form">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--txt-3);margin-bottom:8px">Add Comment</div>
+                  <textarea class="cmt-inp" id="ctxt" placeholder="Write your comment…"></textarea>
+                  <div id="phprev"></div>
+                  <div class="cmt-row">
+                    <label class="fi-lbl" for="cphoto">📎 Attach Photo</label>
+                    <input type="file" id="cphoto" accept="image/*" onchange="prevPhoto(this)">
+                    <button class="btn btn-primary btn-sm" onclick="postComment()">Send →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="ch"><span class="ct">Info</span></div>
+              <div class="cb"><div id="dsidebar"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN USERS -->
+    <div id="view-admin-users" class="view">
+      <div class="ph">
+        <div><div class="ph-t">User Management</div><div class="ph-s">Create and manage platform users</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openUM()">➕ Create User</button>
+      </div>
+      <div class="pb">
+        <div class="card"><div id="ulist" style="overflow-x:auto"><div class="loading"><div class="spin"></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- RECYCLE BIN -->
+    <div id="view-recycle-bin" class="view">
+      <div class="ph">
+        <div><div class="ph-t">🗑️ Recycle Bin</div><div class="ph-s">Deleted tickets — can be restored</div></div>
+        <button class="btn btn-danger btn-sm" onclick="emptyBin()">🔥 Empty Bin</button>
+      </div>
+      <div class="pb"><div id="rbin"><div class="loading"><div class="spin"></div></div></div></div>
+    </div>
+
+    <!-- BACKUP & RESTORE -->
+    <div id="view-backup-restore" class="view">
+      <div class="ph"><div><div class="ph-t">💾 Backup &amp; Restore</div><div class="ph-s">Export and import platform data</div></div></div>
+      <div class="pb">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px" class="two">
+          <div class="card">
+            <div class="ch"><span class="ct">⬇️ Backup</span></div>
+            <div class="cb">
+              <p style="color:var(--txt-2);font-size:13px;margin-bottom:18px">Export all data to a JSON file for safekeeping or migration.</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <button class="btn btn-secondary" onclick="bkpTickets()">⬇️ Export Tickets</button>
+                <button class="btn btn-secondary" onclick="bkpComments()">⬇️ Export Comments</button>
+                <button class="btn btn-primary" onclick="bkpAll()">⬇️ Full Backup</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">⬆️ Restore</span></div>
+            <div class="cb">
+              <p style="color:var(--txt-2);font-size:13px;margin-bottom:18px">Import from a JSON backup. Edit the file before uploading to restore with modifications.</p>
+              <label class="fi-lbl" for="rfile" style="justify-content:center;padding:12px;display:flex">📂 Choose Backup File (.json)</label>
+              <input type="file" id="rfile" accept=".json" onchange="loadRFile(this)">
+              <div id="rprev" style="display:none;margin-top:14px">
+                <div class="div" style="margin:10px 0"></div>
+                <div id="rsum" style="font-size:12px;color:var(--txt-2);margin-bottom:12px;line-height:1.8"></div>
+                <button class="btn btn-success" onclick="doRestore()">⬆️ Restore Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:800px;margin-top:20px">
+          <div class="ch">
+            <span class="ct">📝 Database Setup SQL</span>
+            <button class="btn btn-secondary btn-xs" onclick="cpSQL()">📋 Copy</button>
+          </div>
+          <div class="cb">
+            <p style="color:var(--txt-2);font-size:12px;margin-bottom:12px">Run this SQL in your <strong>Supabase → SQL Editor</strong> to create all required tables:</p>
+            <pre class="sql-box" id="sqlbox"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<div id="m-cu" class="moverlay" style="display:none">
+  <div class="modal">
+    <div class="mh"><span class="mt">Create New User</span><button class="mc" onclick="cM('m-cu')">×</button></div>
+    <div class="mb">
+      <div class="fl"><label>Full Name *</label><input type="text" id="un" class="fi" placeholder="Jane Doe"></div>
+      <div class="fl"><label>Email *</label><input type="email" id="ue" class="fi" placeholder="jane@company.com"></div>
+      <div class="fl"><label>Password *</label><input type="password" id="up" class="fi" placeholder="Min 6 characters"></div>
+      <div class="fl"><label>Role</label>
+        <select id="ur" class="fi"><option value="user">👤 User</option><option value="admin">👑 Admin</option></select>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-secondary" onclick="cM('m-cu')">Cancel</button>
+      <button class="btn btn-primary" onclick="mkUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-rp" class="moverlay" style="display:none">
+  <div class="modal">
+    <div class="mh"><span class="mt">🔑 Reset Password</span><button class="mc" onclick="cM('m-rp')">×</button></div>
+    <div class="mb">
+      <p style="color:var(--txt-2);font-size:13px;margin-bottom:18px">Sending reset email to <strong id="rpn" style="color:var(--txt-1)"></strong></p>
+      <input type="hidden" id="rpe">
+      <div class="fl"><label>New Password (optional direct set)</label><input type="password" id="rpw" class="fi" placeholder="Leave blank to send reset email"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-secondary" onclick="cM('m-rp')">Cancel</button>
+      <button class="btn btn-primary" onclick="rstPw()">Send Reset</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-cd" class="moverlay" style="display:none">
+  <div class="modal">
+    <div class="mh"><span class="mt">⚠️ Confirm</span><button class="mc" onclick="cM('m-cd')">×</button></div>
+    <div class="mb"><p style="color:var(--txt-2);font-size:13px" id="cdmsg">Are you sure?</p></div>
+    <div class="mf">
+      <button class="btn btn-secondary" onclick="cM('m-cd')">Cancel</button>
+      <button class="btn btn-danger" id="cdbtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="tst"></div>
+
+<script>
+// ══ SUPABASE ══
+const SB_URL = 'https://prkjsvobehtjdapuutxn.supabase.co';
+const SB_KEY = 'sb_publishable_1-HOU4yRGa7Hr1q1r_ehgA_TiNamFL4';
+const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
+
+// ══ STATE ══
+let CU = null, CP = null, CTid = null, allT = [], cFlt = 'all', lFlt = 'all', rData = null, cPhoto = null;
+
+// ══ INIT ══
+async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) { await loadCP(session.user); showApp(); }
+    sb.auth.onAuthStateChange(async (ev, session) => {
+        if (ev === 'SIGNED_IN' && session) { await loadCP(session.user); showApp(); }
+        else if (ev === 'SIGNED_OUT') showLogin();
+    });
+}
+
+async function loadCP(user) {
+    CU = user;
+    const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    if (p) { CP = p; return; }
+    const name = user.email.split('@')[0];
+    const { data: np } = await sb.from('profiles').insert({ id: user.id, full_name: name, email: user.email, role: 'user' }).select().single();
+    CP = np;
+}
+
+function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    const nm = CP?.full_name || CU?.email || 'User';
+    const rl = CP?.role || 'user';
+    document.getElementById('sa').textContent = nm.charAt(0).toUpperCase();
+    document.getElementById('sn').textContent = nm;
+    document.getElementById('sr').textContent = rl;
+    document.getElementById('sr').className = 'u-role ' + rl;
+    document.getElementById('tby').value = nm;
+    document.getElementById('tdt').value = new Date().toLocaleString();
+    document.getElementById('admin-nav').style.display = rl === 'admin' ? 'block' : 'none';
+    document.getElementById('sqlbox').textContent = sqlSetup();
+    go('dashboard');
+}
+
+function showLogin() {
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    CU = null; CP = null;
+}
+
+// ══ AUTH ══
+async function doLogin() {
+    const em = document.getElementById('le').value.trim();
+    const pw = document.getElementById('lp').value;
+    const btn = document.getElementById('lbtn');
+    const err = document.getElementById('lerr');
+    if (!em || !pw) { showE('Please enter email and password'); return; }
+    btn.innerHTML = '<div class="spin" style="border-top-color:#fff"></div> Signing in…';
+    btn.disabled = true; err.style.display = 'none';
+    const { error } = await sb.auth.signInWithPassword({ email: em, password: pw });
+    if (error) { showE(error.message || 'Invalid credentials'); btn.innerHTML = 'Sign In to Dashboard →'; btn.disabled = false; }
+}
+function showE(m) { const e = document.getElementById('lerr'); e.textContent = m; e.style.display = 'block'; }
+async function doLogout() { await sb.auth.signOut(); showLogin(); toast('Signed out', 'info'); }
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin(); });
+
+// ══ NAV ══
+function go(v) {
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.ni').forEach(x => x.classList.remove('active'));
+    const el = document.getElementById('view-' + v);
+    if (el) el.classList.add('active');
+    const ni = document.getElementById('nav-' + v);
+    if (ni) ni.classList.add('active');
+    if (v === 'dashboard') loadT();
+    if (v === 'ticket-log') loadLog();
+    if (v === 'admin-users') loadU();
+    if (v === 'recycle-bin') loadBin();
+    if (v === 'create-ticket') { document.getElementById('tdt').value = new Date().toLocaleString(); }
+}
+
+// ══ TICKETS ══
+async function loadT() {
+    document.getElementById('tlist').innerHTML = '<div class="loading"><div class="spin"></div>Loading…</div>';
+    const { data, error } = await sb.from('tickets').select('*').is('deleted_at', null).order('created_at', { ascending: false });
+    if (error) { document.getElementById('tlist').innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>Error</h3><p>${error.message}</p></div>`; return; }
+    allT = data || [];
+    document.getElementById('st-tot').textContent = allT.length;
+    document.getElementById('st-pen').textContent = allT.filter(t => t.status === 'pending').length;
+    document.getElementById('st-res').textContent = allT.filter(t => t.status === 'resolved').length;
+    document.getElementById('st-rep').textContent = allT.filter(t => t.status === 'reopened').length;
+    renderTickets();
+}
+
+function renderTickets(q = '') {
+    let d = allT.filter(t => cFlt === 'all' || t.status === cFlt);
+    if (q) { const ql = q.toLowerCase(); d = d.filter(t => t.title?.toLowerCase().includes(ql) || t.creator_name?.toLowerCase().includes(ql) || t.description?.toLowerCase().includes(ql)); }
+    if (!d.length) { document.getElementById('tlist').innerHTML = '<div class="empty"><div class="empty-ico">🎫</div><h3>No tickets found</h3><p>Create your first ticket to get started</p></div>'; return; }
+    document.getElementById('tlist').innerHTML = `<div class="tlist">${d.map(t => `
+        <div class="tc ${t.status}" onclick="openT('${t.id}')">
+          <div class="tc-ico" style="background:${sBg(t.status)}">${sIco(t.status)}</div>
+          <div class="tc-info">
+            <div class="tc-title">${esc(t.title)}</div>
+            <div class="tc-meta">
+              <span>👤 ${esc(t.creator_name || '—')}</span>
+              <span>📅 ${fmtD(t.created_at)}</span>
+              <span>🏷️ ${t.category || 'General'}</span>
+              <span>${priLabel(t.priority)}</span>
+            </div>
+          </div>
+          <span class="sb-badge ${t.status}"><span class="sb-dot"></span>${t.status}</span>
+        </div>`).join('')}</div>`;
+}
+
+function setF(f, btn) {
+    cFlt = f;
+    document.querySelectorAll('#view-dashboard .fbar .fb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTickets(document.getElementById('tsearch').value);
+}
+
+async function openT(id) {
+    CTid = id;
+    go('ticket-detail');
+    const { data: t } = await sb.from('tickets').select('*').eq('id', id).single();
+    if (!t) return;
+    document.getElementById('dh-t').textContent = t.title;
+    document.getElementById('dh-s').textContent = `Created by ${t.creator_name} · ${fmtDT(t.created_at)}`;
+    document.getElementById('dbadge').innerHTML = badge(t.status);
+    document.getElementById('dsts').value = t.status;
+    document.getElementById('del-btn').style.display = CP?.role === 'admin' ? 'inline-flex' : 'none';
+    document.getElementById('dcont').innerHTML = `
+      <div style="margin-bottom:12px">
+        <div class="ir-l">Description</div>
+        <p style="color:var(--txt-2);font-size:13px;line-height:1.75">${esc(t.description)}</p>
+      </div>`;
+    document.getElementById('dsidebar').innerHTML = [
+        irw('Status', badge(t.status)),
+        irw('Created By', esc(t.creator_name || '—')),
+        irw('Date & Time', fmtDT(t.created_at)),
+        irw('Category', t.category || '—'),
+        irw('Priority', priLabel(t.priority)),
+        irw('Ticket ID', `<span style="font-family:'JetBrains Mono',monospace;font-size:10px">${t.id.substring(0,12)}…</span>`)
+    ].join('');
+    loadCmt(id);
+}
+
+function irw(l, v) { return `<div class="info-row"><div class="ir-l">${l}</div><div class="ir-v">${v}</div></div>`; }
+
+async function updStatus(s) {
+    if (!CTid) return;
+    const { error } = await sb.from('tickets').update({ status: s, updated_at: new Date().toISOString() }).eq('id', CTid);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    document.getElementById('dbadge').innerHTML = badge(s);
+    toast('Status updated to ' + s, 'success');
+    loadT();
+}
+
+async function mkTicket() {
+    const title = document.getElementById('ttl').value.trim();
+    const desc = document.getElementById('tdesc').value.trim();
+    const cat = document.getElementById('tcat').value;
+    const pri = document.getElementById('tpri').value;
+    if (!title || !desc) { toast('Please fill in title and description', 'error'); return; }
+    const btn = document.getElementById('ctbtn');
+    btn.textContent = 'Submitting…'; btn.disabled = true;
+    const { error } = await sb.from('tickets').insert({
+        title, description: desc, category: cat, priority: pri, status: 'pending',
+        created_by: CU.id, creator_name: CP?.full_name || CU?.email, created_at: new Date().toISOString()
+    });
+    btn.textContent = 'Submit Ticket →'; btn.disabled = false;
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    document.getElementById('ttl').value = '';
+    document.getElementById('tdesc').value = '';
+    toast('✅ Ticket created successfully!', 'success');
+    go('dashboard');
+}
+
+function delTicket() {
+    confirm2('Move this ticket to Recycle Bin?', 'Move to Bin', async () => {
+        const { error } = await sb.from('tickets').update({ deleted_at: new Date().toISOString(), deleted_by: CU.id }).eq('id', CTid);
+        if (error) { toast('Error: ' + error.message, 'error'); return; }
+        toast('Ticket moved to Recycle Bin', 'info');
+        cM('m-cd'); go('dashboard');
+    });
+}
+
+// ══ TICKET LOG ══
+async function loadLog() {
+    document.getElementById('tlog').innerHTML = '<div class="loading"><div class="spin"></div></div>';
+    const { data } = await sb.from('tickets').select('*').is('deleted_at', null).order('created_at', { ascending: false });
+    let d = (data || []).filter(t => lFlt === 'all' || t.status === lFlt);
+    if (!d.length) { document.getElementById('tlog').innerHTML = '<div class="empty"><div class="empty-ico">📋</div><h3>No tickets in log</h3></div>'; return; }
+    document.getElementById('tlog').innerHTML = `<table class="dt">
+        <thead><tr><th>ID</th><th>Title</th><th>Creator</th><th>Category</th><th>Priority</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>${d.map(t => `<tr onclick="openT('${t.id}')" style="cursor:pointer">
+          <td style="font-family:'JetBrains Mono',monospace;font-size:10px">${t.id.substring(0,8)}…</td>
+          <td style="font-weight:700;color:var(--txt-1)">${esc(t.title)}</td>
+          <td>${esc(t.creator_name || '—')}</td>
+          <td style="text-transform:capitalize">${t.category || '—'}</td>
+          <td>${priLabel(t.priority)}</td>
+          <td>${badge(t.status)}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${fmtD(t.created_at)}</td>
+        </tr>`).join('')}</tbody></table>`;
+}
+
+function setLF(f, btn) {
+    lFlt = f;
+    document.querySelectorAll('#log-fbar .fb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); loadLog();
+}
+
+function exportLog() {
+    const rows = [['ID','Title','Creator','Category','Priority','Status','Created']].concat(
+        allT.map(t => [t.id, t.title, t.creator_name, t.category, t.priority, t.status, fmtDT(t.created_at)]));
+    const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    dlFile(csv, 'ticket-log-' + ds() + '.csv', 'text/csv');
+    toast('Log exported', 'success');
+}
+
+// ══ COMMENTS ══
+async function loadCmt(id) {
+    const el = document.getElementById('clist');
+    el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+    const { data: cs } = await sb.from('ticket_comments').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
+    const list = cs || [];
+    document.getElementById('ccount').textContent = `${list.length} comment${list.length !== 1 ? 's' : ''}`;
+    if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:28px;color:var(--txt-3);font-size:13px">No comments yet — be the first!</div>'; return; }
+    el.innerHTML = list.map(c => `
+      <div class="cmt">
+        <div class="cmt-av">${(c.user_name || 'U').charAt(0).toUpperCase()}</div>
+        <div class="cmt-bub">
+          <div class="cmt-hd"><span class="cmt-auth">${esc(c.user_name || '?')}</span><span class="cmt-time">${fmtDT(c.created_at)}</span></div>
+          <div class="cmt-txt">${esc(c.content)}</div>
+          ${c.photo_url ? `<div class="cmt-img"><img src="${c.photo_url}" alt="Attachment" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        </div>
+      </div>`).join('');
+}
+
+function prevPhoto(inp) {
+    cPhoto = inp.files[0];
+    const el = document.getElementById('phprev');
+    if (cPhoto) {
+        const r = new FileReader();
+        r.onload = e => { el.innerHTML = `<div class="ph-prev"><img src="${e.target.result}"><div style="padding:5px 8px;font-size:11px;color:var(--txt-3)">📎 ${cPhoto.name}</div></div>`; };
+        r.readAsDataURL(cPhoto);
+    }
+}
+
+async function postComment() {
+    const txt = document.getElementById('ctxt').value.trim();
+    if (!txt) { toast('Write a comment first', 'error'); return; }
+    let pUrl = null;
+    if (cPhoto) {
+        const fn = `${CTid}/${Date.now()}-${cPhoto.name}`;
+        const { data: ud, error: ue } = await sb.storage.from('ticket-attachments').upload(fn, cPhoto);
+        if (!ue && ud) {
+            const { data: { publicUrl } } = sb.storage.from('ticket-attachments').getPublicUrl(fn);
+            pUrl = publicUrl;
+        } else {
+            // Fallback: base64 embed
+            await new Promise(res => { const r = new FileReader(); r.onload = e => { pUrl = e.target.result; res(); }; r.readAsDataURL(cPhoto); });
+        }
+    }
+    const { error } = await sb.from('ticket_comments').insert({
+        ticket_id: CTid, user_id: CU.id, user_name: CP?.full_name || CU.email,
+        content: txt, photo_url: pUrl, created_at: new Date().toISOString()
+    });
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    document.getElementById('ctxt').value = '';
+    document.getElementById('phprev').innerHTML = '';
+    document.getElementById('cphoto').value = '';
+    cPhoto = null;
+    toast('Comment posted!', 'success');
+    loadCmt(CTid);
+}
+
+// ══ ADMIN USERS ══
+async function loadU() {
+    if (CP?.role !== 'admin') return;
+    document.getElementById('ulist').innerHTML = '<div class="loading"><div class="spin"></div></div>';
+    const { data: users } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    if (!users?.length) { document.getElementById('ulist').innerHTML = '<div class="empty"><div class="empty-ico">👥</div><h3>No users found</h3></div>'; return; }
+    document.getElementById('ulist').innerHTML = `<table class="dt">
+        <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody>${users.map(u => `<tr>
+          <td style="font-weight:700;color:var(--txt-1)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:30px;height:30px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px">${(u.full_name||'U').charAt(0)}</div>
+              ${esc(u.full_name || 'Unknown')}
+            </div>
+          </td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(u.email)}</td>
+          <td><span class="sb-badge ${u.role === 'admin' ? 'resolved' : 'pending'}" style="font-size:10px">${u.role === 'admin' ? '👑' : '👤'} ${u.role}</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${fmtD(u.created_at)}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-secondary btn-xs" onclick="openRP('${u.id}','${esc(u.full_name)}','${u.email}')">🔑 Reset PW</button>
+              ${u.id !== CU?.id ? `<button class="btn btn-ghost btn-xs" onclick="togRole('${u.id}','${u.role}','${esc(u.full_name)}')">🔄 ${u.role === 'admin' ? '→ User' : '→ Admin'}</button>` : ''}
+            </div>
+          </td>
+        </tr>`).join('')}</tbody></table>`;
+}
+
+function openUM() { document.getElementById('m-cu').style.display = 'flex'; }
+
+async function mkUser() {
+    const n = document.getElementById('un').value.trim();
+    const e = document.getElementById('ue').value.trim();
+    const p = document.getElementById('up').value;
+    const r = document.getElementById('ur').value;
+    if (!n || !e || !p) { toast('Fill all fields', 'error'); return; }
+    const { data, error } = await sb.auth.signUp({ email: e, password: p, options: { data: { full_name: n } } });
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    if (data.user) await sb.from('profiles').upsert({ id: data.user.id, full_name: n, email: e, role: r });
+    toast(`User ${n} created!`, 'success');
+    cM('m-cu'); loadU();
+    ['un','ue','up'].forEach(id => document.getElementById(id).value = '');
+}
+
+function openRP(id, name, email) {
+    document.getElementById('rpn').textContent = name;
+    document.getElementById('rpe').value = email;
+    document.getElementById('m-rp').style.display = 'flex';
+}
+
+async function rstPw() {
+    const em = document.getElementById('rpe').value;
+    const { error } = await sb.auth.resetPasswordForEmail(em, { redirectTo: window.location.href });
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    toast('Password reset email sent to ' + em, 'success');
+    cM('m-rp'); document.getElementById('rpw').value = '';
+}
+
+async function togRole(id, cur, name) {
+    const nw = cur === 'admin' ? 'user' : 'admin';
+    const { error } = await sb.from('profiles').update({ role: nw }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    toast(`${name} is now ${nw}`, 'success'); loadU();
+}
+
+// ══ RECYCLE BIN ══
+async function loadBin() {
+    if (CP?.role !== 'admin') return;
+    document.getElementById('rbin').innerHTML = '<div class="loading"><div class="spin"></div></div>';
+    const { data } = await sb.from('tickets').select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
+    if (!data?.length) { document.getElementById('rbin').innerHTML = '<div class="empty"><div class="empty-ico">🗑️</div><h3>Recycle bin is empty</h3><p>Deleted tickets will appear here</p></div>'; return; }
+    document.getElementById('rbin').innerHTML = `<div class="tlist">${data.map(t => `
+      <div class="tc" style="opacity:.7;border-left-color:var(--red)">
+        <div class="tc-ico" style="background:rgba(239,68,68,.1)">🗑️</div>
+        <div class="tc-info">
+          <div class="tc-title" style="text-decoration:line-through">${esc(t.title)}</div>
+          <div class="tc-meta"><span>👤 ${esc(t.creator_name || '—')}</span><span>🗑️ ${fmtD(t.deleted_at)}</span></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-xs" onclick="rstTicket('${t.id}')">♻️ Restore</button>
+          <button class="btn btn-danger btn-xs" onclick="permDel('${t.id}')">❌ Delete</button>
+        </div>
+      </div>`).join('')}</div>`;
+}
+
+async function rstTicket(id) {
+    const { error } = await sb.from('tickets').update({ deleted_at: null, deleted_by: null }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    toast('Ticket restored!', 'success'); loadBin();
+}
+
+function permDel(id) {
+    confirm2('Permanently delete this ticket? Cannot be undone.', 'Delete Forever', async () => {
+        await sb.from('ticket_comments').delete().eq('ticket_id', id);
+        const { error } = await sb.from('tickets').delete().eq('id', id);
+        if (error) { toast('Error: ' + error.message, 'error'); return; }
+        toast('Permanently deleted', 'info'); cM('m-cd'); loadBin();
+    });
+}
+
+function emptyBin() {
+    confirm2('Delete ALL items in Recycle Bin permanently? This cannot be undone.', 'Empty Bin', async () => {
+        const { data } = await sb.from('tickets').select('id').not('deleted_at', 'is', null);
+        if (data) for (const t of data) { await sb.from('ticket_comments').delete().eq('ticket_id', t.id); await sb.from('tickets').delete().eq('id', t.id); }
+        toast('Recycle bin emptied', 'info'); cM('m-cd'); loadBin();
+    });
+}
+
+// ══ BACKUP & RESTORE ══
+async function bkpTickets() {
+    const { data } = await sb.from('tickets').select('*').is('deleted_at', null);
+    dlFile(JSON.stringify(data, null, 2), 'tickets-' + ds() + '.json', 'application/json');
+    toast('Tickets exported', 'success');
+}
+async function bkpComments() {
+    const { data } = await sb.from('ticket_comments').select('*');
+    dlFile(JSON.stringify(data, null, 2), 'comments-' + ds() + '.json', 'application/json');
+    toast('Comments exported', 'success');
+}
+async function bkpAll() {
+    const [{ data: tix }, { data: cmts }, { data: profs }] = await Promise.all([
+        sb.from('tickets').select('*'),
+        sb.from('ticket_comments').select('*'),
+        sb.from('profiles').select('*')
+    ]);
+    const bk = { exported_at: new Date().toISOString(), version: '1.0', tickets: tix||[], comments: cmts||[], profiles: profs||[] };
+    dlFile(JSON.stringify(bk, null, 2), 'full-backup-' + ds() + '.json', 'application/json');
+    toast('Full backup downloaded', 'success');
+}
+
+function loadRFile(inp) {
+    const file = inp.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = e => {
+        try {
+            rData = JSON.parse(e.target.result);
+            let info = `📄 ${file.name}<br>`;
+            if (rData.tickets) info += `🎫 Tickets: <strong>${rData.tickets.length}</strong><br>`;
+            if (rData.comments) info += `💬 Comments: <strong>${rData.comments.length}</strong><br>`;
+            if (rData.profiles) info += `👥 Users: <strong>${rData.profiles.length}</strong><br>`;
+            if (rData.exported_at) info += `📅 Exported: ${fmtDT(rData.exported_at)}`;
+            document.getElementById('rsum').innerHTML = info;
+            document.getElementById('rprev').style.display = 'block';
+            toast('Backup file loaded', 'success');
+        } catch { toast('Invalid JSON file', 'error'); }
+    };
+    r.readAsText(file);
+}
+
+function doRestore() {
+    if (!rData) return;
+    confirm2('Restore data from backup file? Existing records with matching IDs will be updated.', 'Restore Now', async () => {
+        let n = 0;
+        if (rData.tickets) for (const t of rData.tickets) { const { error } = await sb.from('tickets').upsert(t); if (!error) n++; }
+        if (rData.comments) for (const c of rData.comments) await sb.from('ticket_comments').upsert(c);
+        toast(`Restore complete — ${n} tickets restored!`, 'success');
+        cM('m-cd'); rData = null;
+        document.getElementById('rprev').style.display = 'none';
+        document.getElementById('rfile').value = '';
+    });
+}
+
+// ══ HELPERS ══
+function badge(s) { return `<span class="sb-badge ${s}"><span class="sb-dot"></span>${s}</span>`; }
+function sIco(s) { return { pending:'🟡', resolved:'🟢', reopened:'🟠' }[s]||'⚪'; }
+function sBg(s) { return { pending:'rgba(245,158,11,.12)', resolved:'rgba(16,185,129,.12)', reopened:'rgba(249,115,22,.12)' }[s]||'rgba(59,130,246,.12)'; }
+function priLabel(p) { const m = {low:'🟢 Low', medium:'🟡 Medium', high:'🔴 High', critical:'🚨 Critical'}; return m[p]||p||'—'; }
+function fmtD(iso) { if(!iso) return '—'; return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDT(iso) { if(!iso) return '—'; return new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function ds() { return new Date().toISOString().split('T')[0]; }
+function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dlFile(c, n, t) { const b = new Blob([c],{type:t}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=n; a.click(); URL.revokeObjectURL(u); }
+
+function toast(msg, type = 'info') {
+    const c = document.getElementById('tst');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const ico = { success:'✅', error:'❌', info:'ℹ️' }[type]||'•';
+    t.innerHTML = `<span>${ico}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(16px)'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 3200);
+}
+
+function cM(id) { document.getElementById(id).style.display = 'none'; }
+
+function confirm2(msg, btnTxt, fn) {
+    document.getElementById('cdmsg').textContent = msg;
+    document.getElementById('cdbtn').textContent = btnTxt;
+    document.getElementById('cdbtn').onclick = fn;
+    document.getElementById('m-cd').style.display = 'flex';
+}
+
+function cpSQL() { navigator.clipboard.writeText(document.getElementById('sqlbox').textContent); toast('SQL copied!', 'success'); }
+
+function sqlSetup() {
+return `-- ╔══════════════════════════════════════════╗
+-- ║   ServiceDesk Pro — Database Setup SQL   ║
+-- ╚══════════════════════════════════════════╝
+-- Run this in: Supabase > SQL Editor > New Query
+
+-- 1. PROFILES TABLE
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id        UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  full_name TEXT NOT NULL DEFAULT '',
+  email     TEXT NOT NULL DEFAULT '',
+  role      TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin','user')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. TICKETS TABLE
+CREATE TABLE IF NOT EXISTS public.tickets (
+  id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title        TEXT NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  category     TEXT DEFAULT 'other',
+  priority     TEXT DEFAULT 'medium',
+  status       TEXT NOT NULL DEFAULT 'pending'
+               CHECK (status IN ('pending','resolved','reopened')),
+  created_by   UUID REFERENCES auth.users(id),
+  creator_name TEXT NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at   TIMESTAMPTZ,
+  deleted_by   UUID REFERENCES auth.users(id)
+);
+
+-- 3. COMMENTS TABLE
+CREATE TABLE IF NOT EXISTS public.ticket_comments (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ticket_id  UUID REFERENCES public.tickets(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES auth.users(id),
+  user_name  TEXT NOT NULL DEFAULT '',
+  content    TEXT NOT NULL,
+  photo_url  TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. ROW LEVEL SECURITY
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ticket_comments ENABLE ROW LEVEL SECURITY;
+
+-- 5. POLICIES (open to all authenticated users)
+CREATE POLICY "profiles_all" ON public.profiles
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "tickets_all" ON public.tickets
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "comments_all" ON public.ticket_comments
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 6. STORAGE BUCKET (for photo attachments)
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('ticket-attachments','ticket-attachments',true)
+  ON CONFLICT DO NOTHING;
+CREATE POLICY "storage_all" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'ticket-attachments')
+  WITH CHECK (bucket_id = 'ticket-attachments');
+
+-- 7. MAKE YOURSELF ADMIN (run after first login)
+-- UPDATE public.profiles SET role = 'admin'
+-- WHERE email = 'your-admin@email.com';`;
+}
+
+// ══ START ══
+init();
+</script>
+</body>
+</html>
