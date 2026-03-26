@@ -332,18 +332,42 @@ select option{background:var(--surface2);}
         <div class="login-tagline">IT Services Billing</div>
       </div>
     </div>
-    <div class="login-hed">Welcome back</div>
-    <div class="login-sub">Sign in to your billing workspace</div>
-    <div class="login-err" id="login-err" style="display:none;"></div>
-    <div class="login-fg">
-      <label>Username</label>
-      <input id="l-user" type="text" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
+
+    <!-- Normal sign in -->
+    <div id="login-panel">
+      <div class="login-hed">Welcome back</div>
+      <div class="login-sub">Sign in to your billing workspace</div>
+      <div class="login-err" id="login-err" style="display:none;"></div>
+      <div class="login-fg">
+        <label>Username</label>
+        <input id="l-user" type="text" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="login-fg">
+        <label>Password</label>
+        <input id="l-pass" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
     </div>
-    <div class="login-fg">
-      <label>Password</label>
-      <input id="l-pass" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+
+    <!-- First-time setup: set password -->
+    <div id="setup-panel" style="display:none;">
+      <div class="login-hed" style="color:var(--cyan);">First Time Setup</div>
+      <div class="login-sub">Welcome! Create a password to secure your account.</div>
+      <div class="login-err" id="setup-err" style="display:none;"></div>
+      <div class="login-fg">
+        <label>Username</label>
+        <input id="setup-user" type="text" readonly style="background:var(--surface3);color:var(--text2);cursor:default;"/>
+      </div>
+      <div class="login-fg">
+        <label>New Password</label>
+        <input id="setup-pass" type="password" placeholder="Choose a password (min 6 chars)" onkeydown="if(event.key==='Enter')doSetupPassword()"/>
+      </div>
+      <div class="login-fg">
+        <label>Confirm Password</label>
+        <input id="setup-confirm" type="password" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')doSetupPassword()"/>
+      </div>
+      <button class="login-btn" onclick="doSetupPassword()">Set Password & Sign In →</button>
     </div>
-    <button class="login-btn" onclick="doLogin()">Sign In →</button>
   </div>
 </div>
 
@@ -517,17 +541,73 @@ select option{background:var(--surface2);}
       <span id="save-ok" style="margin-left:12px;font-size:12px;color:var(--green);display:none;font-family:var(--font-mono)">✓ saved</span>
 
       <div class="settings-card" style="margin-top:24px;">
-        <div class="settings-card-title">Change Login Credentials</div>
-        <div class="form2">
-          <div class="fg"><label>Current Password</label><input id="cr-current" type="password" placeholder="Enter current password"/></div>
-          <div class="fg" style="grid-column:1/-1;height:0;margin:0;padding:0;"></div>
-          <div class="fg"><label>New Username</label><input id="cr-user" type="text" placeholder="Leave blank to keep current"/></div>
-          <div class="fg"><label>New Password</label><input id="cr-pass" type="password" placeholder="Leave blank to keep current"/></div>
-          <div class="fg"><label>Confirm New Password</label><input id="cr-confirm" type="password" placeholder="Re-enter new password"/></div>
+        <div class="settings-card-title">User Management</div>
+
+        <!-- Current Users List -->
+        <div style="margin-bottom:18px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+            <span>All Users</span>
+            <a href="https://supabase.com/dashboard/project/prkjsvobehtjdapuutxn" target="_blank" style="font-size:11px;color:var(--cyan);font-family:var(--font-mono);text-decoration:none;display:flex;align-items:center;gap:5px;">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Supabase Dashboard
+            </a>
+          </div>
+          <div id="users-list" class="tbl-wrap">
+            <table><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody id="users-tbody"></tbody></table>
+          </div>
         </div>
+
+        <!-- Tabs: Create / Change Password / Reset -->
+        <div class="tab-bar" style="margin-bottom:16px;">
+          <button class="tab active" onclick="switchUserTab('create',this)">+ Create User</button>
+          <button class="tab" onclick="switchUserTab('change',this)">Change Password</button>
+          <button class="tab" onclick="switchUserTab('reset',this)">Reset Password</button>
+        </div>
+
+        <!-- Create User -->
+        <div id="utab-create">
+          <div class="form2">
+            <div class="fg"><label>Full Name</label><input id="nu-name" type="text" placeholder="e.g. John Doe"/></div>
+            <div class="fg"><label>Username</label><input id="nu-user" type="text" placeholder="e.g. john_doe"/></div>
+            <div class="fg"><label>Password</label><input id="nu-pass" type="password" placeholder="Min 6 characters"/></div>
+            <div class="fg"><label>Role</label>
+              <select id="nu-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-cyan" style="margin-top:12px;" onclick="createUser()">Create User</button>
+        </div>
+
+        <!-- Change Password (own account) -->
+        <div id="utab-change" style="display:none;">
+          <div class="form2">
+            <div class="fg"><label>Current Password</label><input id="cr-current" type="password" placeholder="Enter current password"/></div>
+            <div class="fg" style="grid-column:1/-1;height:0;margin:0;padding:0;"></div>
+            <div class="fg"><label>New Username <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label><input id="cr-user" type="text" placeholder="Leave blank to keep current"/></div>
+            <div class="fg"><label>New Password</label><input id="cr-pass" type="password" placeholder="Min 6 characters"/></div>
+            <div class="fg"><label>Confirm Password</label><input id="cr-confirm" type="password" placeholder="Re-enter new password"/></div>
+          </div>
+          <button class="btn btn-cyan" style="margin-top:12px;" onclick="changeCredentials()">Update My Credentials</button>
+        </div>
+
+        <!-- Admin: Reset any user's password -->
+        <div id="utab-reset" style="display:none;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Admin only — reset password for any user without knowing their current password.</div>
+          <div class="form2">
+            <div class="fg"><label>Select User</label>
+              <select id="reset-user-sel"></select>
+            </div>
+            <div class="fg"><label>New Password</label><input id="reset-pass" type="password" placeholder="New password (min 6 chars)"/></div>
+          </div>
+          <button class="btn btn-amber" style="margin-top:12px;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,179,0,0.25);" onclick="adminResetPassword()">Reset Password</button>
+        </div>
+
+        <!-- Status messages -->
         <div id="cr-err" style="margin-top:12px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.2);color:var(--red);border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);display:none;"></div>
-        <div id="cr-ok" style="margin-top:12px;background:rgba(0,255,179,0.08);border:1px solid rgba(0,255,179,0.2);color:var(--green);border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);display:none;">✓ Credentials updated successfully</div>
-        <button class="btn btn-cyan" style="margin-top:16px;" onclick="changeCredentials()">Update Credentials</button>
+        <div id="cr-ok" style="margin-top:12px;background:rgba(0,255,179,0.08);border:1px solid rgba(0,255,179,0.2);color:var(--green);border-radius:7px;padding:9px 13px;font-size:12px;font-family:var(--font-mono);display:none;"></div>
       </div>
 
       <div class="settings-card" style="margin-top:24px;">
@@ -535,7 +615,8 @@ select option{background:var(--surface2);}
 
         <!-- Baked-in defaults indicator -->
         <div id="cloud-defaults-info" style="display:none;background:rgba(0,255,179,0.06);border:1px solid rgba(0,255,179,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;font-family:var(--font-mono);color:var(--green);">
-          ✓ Credentials are baked into this file — auto-connects on every device automatically.
+          ✓ Connected to <strong>prkjsvobehtjdapuutxn.supabase.co</strong> — pre-configured, auto-connects on every device.
+          <a href="https://supabase.com/dashboard/project/prkjsvobehtjdapuutxn" target="_blank" style="color:var(--cyan);margin-left:8px;text-decoration:none;">Open Dashboard ↗</a>
         </div>
 
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:14px 16px;margin-bottom:18px;">
@@ -863,8 +944,8 @@ function cacheSet(key,val){return openDB().then(db=>new Promise((resolve,reject)
 // === PASTE YOUR SUPABASE CREDENTIALS HERE (one-time setup) ===
 // === After pasting, save the file - all devices auto-connect ===
 const SUPABASE_DEFAULTS = {
-  url:  '',   // e.g. 'https://abcxyz.supabase.co'
-  key:  '',   // e.g. 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  url:  'https://prkjsvobehtjdapuutxn.supabase.co',
+  key:  'sb_publishable_1-HOU4yRGa7Hr1q1r_ehgA_TiNamFL4',
   user: 'billed_default'
 };
 
@@ -1340,6 +1421,8 @@ function loadSettings(){
     const el=document.getElementById('sc-'+k);if(el)el.value=s[k]||'';
   });
   loadCloudConfigUI();
+  renderUsersList();
+  switchUserTab('create', document.querySelector('#pg-settings .tab'));
 }
 function saveSettings(){
   ['name','gstn','pan','cin','email','phone','addr','prefix','gst','currency','terms','hsn','state','bank','acno','ifsc','branch'].forEach(k=>{
@@ -1870,7 +1953,7 @@ function downloadInvoiceHTML(idx){
 }
 
 // ===== AUTH =====
-const DEFAULT_USERS=[{username:'admin',password:'admin123',name:'Admin'}];
+const DEFAULT_USERS=[{username:'admin',password:'',name:'Admin',role:'admin',mustSetPassword:true}];
 
 function getUsers(){
   try{const u=localStorage.getItem('billed_users');if(u)return JSON.parse(u);}catch(e){}
@@ -1888,23 +1971,79 @@ function doLogin(){
   var pass=document.getElementById('l-pass').value||'';
   var err=document.getElementById('login-err');
   if(err)err.style.display='none';
-  if(!user||!pass){
-    if(err){err.textContent='Please enter username and password';err.style.display='block';}
+  if(!user){
+    if(err){err.textContent='Please enter your username';err.style.display='block';}
     return;
   }
   var users=getUsers();
-  var found=null;
+  // Find user by username first (ignore password for now)
+  var found=null, foundIdx=-1;
   for(var i=0;i<users.length;i++){
-    if(users[i].username===user&&users[i].password===pass){found=users[i];break;}
+    if(users[i].username===user){found=users[i];foundIdx=i;break;}
   }
   if(!found){
-    if(err){err.textContent='Invalid username or password';err.style.display='block';}
-    var lp=document.getElementById('l-pass');if(lp)lp.value='';
+    if(err){err.textContent='Username not found';err.style.display='block';}
     return;
   }
+  // First-time setup: no password set yet
+  if(!found.password||found.mustSetPassword){
+    var lp=document.getElementById('login-panel');if(lp)lp.style.display='none';
+    var sp=document.getElementById('setup-panel');if(sp)sp.style.display='block';
+    var su=document.getElementById('setup-user');if(su)su.value=user;
+    var se=document.getElementById('setup-err');if(se)se.style.display='none';
+    var sp2=document.getElementById('setup-pass');if(sp2){sp2.value='';sp2.focus();}
+    return;
+  }
+  // Normal login: verify password
+  if(!pass){
+    if(err){err.textContent='Please enter your password';err.style.display='block';}
+    return;
+  }
+  if(found.password!==pass){
+    if(err){err.textContent='Invalid password';err.style.display='block';}
+    var lp2=document.getElementById('l-pass');if(lp2)lp2.value='';
+    return;
+  }
+  _completeLogin(user);
+}
+
+function doSetupPassword(){
+  var user=(document.getElementById('setup-user').value||'').trim();
+  var pass=document.getElementById('setup-pass').value||'';
+  var confirm=document.getElementById('setup-confirm').value||'';
+  var err=document.getElementById('setup-err');
+  if(err)err.style.display='none';
+  if(pass.length<6){
+    if(err){err.textContent='Password must be at least 6 characters';err.style.display='block';}
+    return;
+  }
+  if(pass!==confirm){
+    if(err){err.textContent='Passwords do not match';err.style.display='block';}
+    return;
+  }
+  var users=getUsers();
+  for(var i=0;i<users.length;i++){
+    if(users[i].username===user){
+      users[i].password=pass;
+      delete users[i].mustSetPassword;
+      break;
+    }
+  }
+  saveUsers(users);
+  // Hide setup panel, go back to login panel with success
+  var sp=document.getElementById('setup-panel');if(sp)sp.style.display='none';
+  var lp=document.getElementById('login-panel');if(lp)lp.style.display='block';
+  // Auto-login
+  _completeLogin(user);
+}
+
+function _completeLogin(user){
   setSession(user);
   var ls=document.getElementById('login-screen');
   if(ls)ls.style.display='none';
+  // Reset panels
+  var lp=document.getElementById('login-panel');if(lp)lp.style.display='block';
+  var sp=document.getElementById('setup-panel');if(sp)sp.style.display='none';
   refreshUI();
   if(CLOUD_CFG.dbUrl&&CLOUD_CFG.apiKey){
     setCloudStatus('syncing');
@@ -1959,6 +2098,106 @@ function changeCredentials(){
   var u=document.getElementById('cr-user');if(u)u.value='';
   var p=document.getElementById('cr-pass');if(p)p.value='';
   var cf=document.getElementById('cr-confirm');if(cf)cf.value='';
+}
+
+// ===== USER MANAGEMENT =====
+function switchUserTab(tab, el) {
+  ['create','change','reset'].forEach(function(t){
+    var d = document.getElementById('utab-'+t);
+    if(d) d.style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#pg-settings .tab').forEach(function(b){b.classList.remove('active');});
+  if(el) el.classList.add('active');
+  var e1=document.getElementById('cr-err'); if(e1)e1.style.display='none';
+  var e2=document.getElementById('cr-ok'); if(e2)e2.style.display='none';
+  if(tab==='reset') populateResetUserList();
+}
+
+function renderUsersList() {
+  var users = getUsers();
+  var session = getSession();
+  var tbody = document.getElementById('users-tbody');
+  if(!tbody) return;
+  if(!users.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px;">No users</td></tr>';return;}
+  tbody.innerHTML = users.map(function(u, i){
+    var isSelf = u.username === session;
+    var isAdmin = u.role === 'admin';
+    return '<tr>' +
+      '<td class="mono" style="font-size:13px;">' + u.username + (isSelf?' <span style="color:var(--cyan);font-size:10px;">(you)</span>':'') + '</td>' +
+      '<td>' + (u.name||'—') + '</td>' +
+      '<td><span class="badge ' + (isAdmin?'badge-paid':'badge-draft') + '">' + (u.role||'user') + '</span></td>' +
+      '<td style="display:flex;gap:4px;">' +
+        (!isSelf ? '<button class="btn btn-danger btn-sm" onclick="deleteUser('+i+')">Del</button>' : '') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function populateResetUserList() {
+  var sel = document.getElementById('reset-user-sel');
+  if(!sel) return;
+  var users = getUsers();
+  sel.innerHTML = users.map(function(u,i){
+    return '<option value="'+i+'">'+u.username+(u.name?' ('+u.name+')':'')+'</option>';
+  }).join('');
+}
+
+function createUser() {
+  var name = (document.getElementById('nu-name').value||'').trim();
+  var username = (document.getElementById('nu-user').value||'').trim();
+  var pass = document.getElementById('nu-pass').value||'';
+  var role = document.getElementById('nu-role').value||'user';
+  var err = document.getElementById('cr-err');
+  var ok = document.getElementById('cr-ok');
+  if(err)err.style.display='none'; if(ok)ok.style.display='none';
+  if(!username){if(err){err.textContent='Username is required.';err.style.display='block';}return;}
+  if(username.length<3){if(err){err.textContent='Username must be at least 3 characters.';err.style.display='block';}return;}
+  if(pass.length<6){if(err){err.textContent='Password must be at least 6 characters.';err.style.display='block';}return;}
+  var users = getUsers();
+  if(users.find(function(u){return u.username===username;})){
+    if(err){err.textContent='Username already exists.';err.style.display='block';}return;
+  }
+  users.push({username:username, password:pass, name:name, role:role});
+  saveUsers(users);
+  document.getElementById('nu-name').value='';
+  document.getElementById('nu-user').value='';
+  document.getElementById('nu-pass').value='';
+  document.getElementById('nu-role').value='user';
+  if(ok){ok.textContent='✓ User "'+username+'" created successfully.';ok.style.display='block';setTimeout(function(){if(ok)ok.style.display='none';},4000);}
+  renderUsersList();
+}
+
+function deleteUser(idx) {
+  var users = getUsers();
+  var u = users[idx];
+  if(!u) return;
+  if(u.username === getSession()){
+    alert('You cannot delete your own account.');return;
+  }
+  if(!confirm('Delete user "'+u.username+'"? This cannot be undone.')) return;
+  users.splice(idx,1);
+  saveUsers(users);
+  renderUsersList();
+  populateResetUserList();
+  var ok=document.getElementById('cr-ok');
+  if(ok){ok.textContent='✓ User "'+u.username+'" deleted.';ok.style.display='block';setTimeout(function(){if(ok)ok.style.display='none';},3000);}
+}
+
+function adminResetPassword() {
+  var sel = document.getElementById('reset-user-sel');
+  var pass = (document.getElementById('reset-pass').value||'');
+  var err = document.getElementById('cr-err');
+  var ok = document.getElementById('cr-ok');
+  if(err)err.style.display='none'; if(ok)ok.style.display='none';
+  if(!sel||sel.value===''){if(err){err.textContent='Select a user.';err.style.display='block';}return;}
+  if(pass.length<6){if(err){err.textContent='New password must be at least 6 characters.';err.style.display='block';}return;}
+  var users = getUsers();
+  var idx = parseInt(sel.value);
+  if(!users[idx]){if(err){err.textContent='User not found.';err.style.display='block';}return;}
+  users[idx].password = pass;
+  saveUsers(users);
+  document.getElementById('reset-pass').value='';
+  if(ok){ok.textContent='✓ Password reset for "'+users[idx].username+'" successfully.';ok.style.display='block';setTimeout(function(){if(ok)ok.style.display='none';},4000);}
 }
 
 // ===== INIT =====
